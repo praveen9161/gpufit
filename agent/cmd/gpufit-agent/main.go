@@ -21,7 +21,7 @@ import (
 	"sort"
 	"text/tabwriter"
 
-	"gpufit/internal/fitness"
+	"github.com/praveen9161/gpufit/agent/internal/fitness"
 )
 
 func main() {
