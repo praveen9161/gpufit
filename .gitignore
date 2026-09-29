@@ -1,0 +1,7 @@
+# Upstream driver clone (its own git repo). Our change is in driver-patch/.
+/dra-example-driver/
+
+# Go build output
+/agent/gpufit-agent
+
+.DS_Store

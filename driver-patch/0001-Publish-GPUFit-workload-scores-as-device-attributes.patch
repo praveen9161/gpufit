@@ -1,0 +1,404 @@
+From 0ba048943b1f15cef0fead1706552475da209339 Mon Sep 17 00:00:00 2001
+From: Praveen <113331169+praveen9161@users.noreply.github.com>
+Date: Tue, 29 Sep 2026 12:22:03 -0500
+Subject: [PATCH] Publish GPUFit workload scores as device attributes
+
+Add an opt-in --gpufit-scores-configmap flag (GPUFIT_SCORES_CONFIGMAP) to
+the kubelet plugin. When set, the driver polls that ConfigMap in its own
+namespace every 5s and, when scores.json changes, republishes its
+ResourceSlices with gpufit.io/<workload>Score int attributes, e.g.
+gpufit.io/trainingScore. Claims can then select devices with CEL:
+
+  device.attributes["gpufit.io"].trainingScore >= 80
+
+Deleting the ConfigMap republishes the devices without scores. Scores are
+validated (0-100, workload names must form valid attribute names) before
+anything is published.
+
+Helm: new value kubeletPlugin.gpufitScoresConfigMap (default "", disabled)
+plus a Role/RoleBinding granting get on that one ConfigMap only.
+
+---
+ cmd/dra-example-kubeletplugin/driver.go       |   4 +
+ .../gpufit_scores.go                          | 163 ++++++++++++++++++
+ .../gpufit_scores_test.go                     |  79 +++++++++
+ cmd/dra-example-kubeletplugin/main.go         |   7 +
+ .../templates/kubeletplugin.yaml              |   2 +
+ .../dra-example-driver/templates/role.yaml    |  14 ++
+ .../templates/rolebinding.yaml                |  16 ++
+ .../helm/dra-example-driver/values.yaml       |   4 +
+ 8 files changed, 289 insertions(+)
+ create mode 100644 cmd/dra-example-kubeletplugin/gpufit_scores.go
+ create mode 100644 cmd/dra-example-kubeletplugin/gpufit_scores_test.go
+
+diff --git a/cmd/dra-example-kubeletplugin/driver.go b/cmd/dra-example-kubeletplugin/driver.go
+index 3ad2477..458d292 100644
+--- a/cmd/dra-example-kubeletplugin/driver.go
++++ b/cmd/dra-example-kubeletplugin/driver.go
+@@ -168,6 +168,10 @@ func NewDriver(ctx context.Context, config *Config) (*driver, error) {
+ 		return nil, err
+ 	}
+ 
++	if name := config.flags.gpufitScoresConfigMap; name != "" {
++		go driver.gpufitScoresLoop(ctx, config.flags.namespace, name)
++	}
++
+ 	if driver.deviceHealth {
+ 		driver.healthWg.Add(2)
+ 		go driver.deviceHealthLoop(ctx)
+diff --git a/cmd/dra-example-kubeletplugin/gpufit_scores.go b/cmd/dra-example-kubeletplugin/gpufit_scores.go
+new file mode 100644
+index 0000000..fac0500
+--- /dev/null
++++ b/cmd/dra-example-kubeletplugin/gpufit_scores.go
+@@ -0,0 +1,163 @@
++/*
++ * Copyright The Kubernetes Authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package main
++
++// GPUFit: publish per-GPU workload fitness scores as DRA device attributes.
++//
++// Scores live in a ConfigMap in the driver's namespace, written by gpufit-agent:
++//
++//	data:
++//	  scores.json: {"gpu-0": {"training": 100, "finetune": 100, "inference": 100}, ...}
++//
++// The driver polls it and, whenever it changes, republishes its ResourceSlices
++// with one attribute per workload: gpufit.io/trainingScore, gpufit.io/finetuneScore,
++// gpufit.io/inferenceScore. Claims then select on them with CEL, e.g.
++//
++//	device.attributes["gpufit.io"].trainingScore >= 80
++//
++// Deleting the ConfigMap republishes the devices without scores.
++
++import (
++	"context"
++	"encoding/json"
++	"fmt"
++	"regexp"
++	"time"
++
++	resourceapi "k8s.io/api/resource/v1"
++	apierrors "k8s.io/apimachinery/pkg/api/errors"
++	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
++	"k8s.io/dynamic-resource-allocation/resourceslice"
++	"k8s.io/klog/v2"
++	"k8s.io/utils/ptr"
++)
++
++const (
++	gpufitDomain       = "gpufit.io"
++	gpufitScoresKey    = "scores.json"
++	gpufitPollInterval = 5 * time.Second
++)
++
++// Workload names become part of an attribute name ("<workload>Score"), which
++// must be a C identifier of at most 32 characters.
++var gpufitWorkloadName = regexp.MustCompile(`^[a-z][a-zA-Z0-9]{0,26}$`)
++
++// gpufitScores maps device name -> workload -> score (0-100).
++type gpufitScores map[string]map[string]int64
++
++func parseGPUFitScores(raw string) (gpufitScores, error) {
++	var scores gpufitScores
++	if err := json.Unmarshal([]byte(raw), &scores); err != nil {
++		return nil, fmt.Errorf("parse %s: %w", gpufitScoresKey, err)
++	}
++	for device, byWorkload := range scores {
++		for workload, score := range byWorkload {
++			if !gpufitWorkloadName.MatchString(workload) {
++				return nil, fmt.Errorf("device %s: invalid workload name %q", device, workload)
++			}
++			if score < 0 || score > 100 {
++				return nil, fmt.Errorf("device %s: %s score %d not in [0, 100]", device, workload, score)
++			}
++		}
++	}
++	return scores, nil
++}
++
++// withGPUFitScores returns a copy of base with score attributes added to every
++// device that has an entry in scores. base is not modified.
++func withGPUFitScores(base resourceslice.DriverResources, scores gpufitScores) resourceslice.DriverResources {
++	out := resourceslice.DriverResources{Pools: make(map[string]resourceslice.Pool, len(base.Pools))}
++	for poolName, pool := range base.Pools {
++		slices := make([]resourceslice.Slice, len(pool.Slices))
++		for i, slice := range pool.Slices {
++			devices := make([]resourceapi.Device, len(slice.Devices))
++			for j := range slice.Devices {
++				device := *slice.Devices[j].DeepCopy()
++				for workload, score := range scores[device.Name] {
++					if device.Attributes == nil {
++						device.Attributes = map[resourceapi.QualifiedName]resourceapi.DeviceAttribute{}
++					}
++					name := resourceapi.QualifiedName(gpufitDomain + "/" + workload + "Score")
++					device.Attributes[name] = resourceapi.DeviceAttribute{IntValue: ptr.To(score)}
++				}
++				devices[j] = device
++			}
++			slice.Devices = devices
++			slices[i] = slice
++		}
++		pool.Slices = slices
++		out.Pools[poolName] = pool
++	}
++	return out
++}
++
++// gpufitScoresLoop polls the scores ConfigMap and republishes the driver's
++// ResourceSlices whenever its content changes. It runs until ctx is done.
++func (d *driver) gpufitScoresLoop(ctx context.Context, namespace, configMap string) {
++	logger := klog.FromContext(ctx).WithName("gpufit").WithValues("configMap", namespace+"/"+configMap)
++	logger.Info("Watching GPUFit scores", "interval", gpufitPollInterval)
++
++	ticker := time.NewTicker(gpufitPollInterval)
++	defer ticker.Stop()
++
++	// "" means "no scores", which is what the driver published at startup.
++	published := ""
++	for {
++		raw, err := d.readGPUFitScores(ctx, namespace, configMap)
++		if err != nil {
++			logger.Error(err, "Reading GPUFit scores")
++		} else if raw != published {
++			if err := d.publishGPUFitScores(ctx, raw); err != nil {
++				logger.Error(err, "Publishing GPUFit scores")
++			} else {
++				published = raw
++				logger.Info("Published GPUFit scores", "bytes", len(raw))
++			}
++		}
++
++		select {
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++		}
++	}
++}
++
++// readGPUFitScores returns the raw scores JSON, or "" if the ConfigMap or key
++// doesn't exist.
++func (d *driver) readGPUFitScores(ctx context.Context, namespace, configMap string) (string, error) {
++	cm, err := d.client.CoreV1().ConfigMaps(namespace).Get(ctx, configMap, metav1.GetOptions{})
++	if apierrors.IsNotFound(err) {
++		return "", nil
++	}
++	if err != nil {
++		return "", err
++	}
++	return cm.Data[gpufitScoresKey], nil
++}
++
++func (d *driver) publishGPUFitScores(ctx context.Context, raw string) error {
++	resources := d.state.driverResources
++	if raw != "" {
++		scores, err := parseGPUFitScores(raw)
++		if err != nil {
++			return err
++		}
++		resources = withGPUFitScores(resources, scores)
++	}
++	return d.helper.PublishResources(ctx, resources)
++}
+diff --git a/cmd/dra-example-kubeletplugin/gpufit_scores_test.go b/cmd/dra-example-kubeletplugin/gpufit_scores_test.go
+new file mode 100644
+index 0000000..0283356
+--- /dev/null
++++ b/cmd/dra-example-kubeletplugin/gpufit_scores_test.go
+@@ -0,0 +1,79 @@
++/*
++ * Copyright The Kubernetes Authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package main
++
++import (
++	"testing"
++
++	resourceapi "k8s.io/api/resource/v1"
++	"k8s.io/dynamic-resource-allocation/resourceslice"
++	"k8s.io/utils/ptr"
++)
++
++func TestWithGPUFitScores(t *testing.T) {
++	base := resourceslice.DriverResources{
++		Pools: map[string]resourceslice.Pool{
++			"node": {Slices: []resourceslice.Slice{{Devices: []resourceapi.Device{
++				{Name: "gpu-0", Attributes: map[resourceapi.QualifiedName]resourceapi.DeviceAttribute{
++					"model": {StringValue: ptr.To("LATEST-GPU-MODEL")},
++				}},
++				{Name: "gpu-1"},
++			}}}},
++		},
++	}
++	scores, err := parseGPUFitScores(`{"gpu-0": {"training": 0, "inference": 100}}`)
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	got := withGPUFitScores(base, scores)
++
++	devices := got.Pools["node"].Slices[0].Devices
++	attrs := devices[0].Attributes
++	if v := attrs["gpufit.io/trainingScore"].IntValue; v == nil || *v != 0 {
++		t.Errorf("gpu-0 trainingScore = %v, want 0", v)
++	}
++	if v := attrs["gpufit.io/inferenceScore"].IntValue; v == nil || *v != 100 {
++		t.Errorf("gpu-0 inferenceScore = %v, want 100", v)
++	}
++	if attrs["model"].StringValue == nil {
++		t.Error("gpu-0 lost its existing model attribute")
++	}
++	if len(devices[1].Attributes) != 0 {
++		t.Errorf("gpu-1 has no scores but got attributes %v", devices[1].Attributes)
++	}
++
++	// The driver's own copy must stay untouched so deleting the ConfigMap can
++	// republish the original devices.
++	if len(base.Pools["node"].Slices[0].Devices[0].Attributes) != 1 {
++		t.Errorf("base was modified: %v", base.Pools["node"].Slices[0].Devices[0].Attributes)
++	}
++}
++
++func TestParseGPUFitScoresRejectsBadInput(t *testing.T) {
++	for _, raw := range []string{
++		`not json`,
++		`{"gpu-0": {"training": 101}}`,
++		`{"gpu-0": {"training": -1}}`,
++		`{"gpu-0": {"Training": 50}}`,
++		`{"gpu-0": {"train-ing": 50}}`,
++	} {
++		if _, err := parseGPUFitScores(raw); err == nil {
++			t.Errorf("parseGPUFitScores(%q) = nil error, want error", raw)
++		}
++	}
++}
+diff --git a/cmd/dra-example-kubeletplugin/main.go b/cmd/dra-example-kubeletplugin/main.go
+index 88434d9..44e6c9c 100644
+--- a/cmd/dra-example-kubeletplugin/main.go
++++ b/cmd/dra-example-kubeletplugin/main.go
+@@ -72,6 +72,7 @@ type Flags struct {
+ 	pcieRoots                     string
+ 	cpuNUMANodes                  int
+ 	cpusPerNUMANode               int
++	gpufitScoresConfigMap         string
+ }
+ 
+ type Config struct {
+@@ -205,6 +206,12 @@ func newApp() *cli.App {
+ 			Destination: &flags.deviceHealth,
+ 			EnvVars:     []string{"DEVICE_HEALTH"},
+ 		},
++		&cli.StringFlag{
++			Name:        "gpufit-scores-configmap",
++			Usage:       "Name of a ConfigMap in the driver's namespace holding GPUFit scores (key scores.json). When set, the scores are published as gpufit.io/<workload>Score device attributes. Empty (default) disables GPUFit.",
++			Destination: &flags.gpufitScoresConfigMap,
++			EnvVars:     []string{"GPUFIT_SCORES_CONFIGMAP"},
++		},
+ 		&cli.BoolFlag{
+ 			Name:        "simulate-health-changes",
+ 			Usage:       "When true, devices randomly walk through simulated health faults on their own. When false (default) they report healthy until pinned via a health.example.com/<device> annotation. Only relevant when --device-health is enabled.",
+diff --git a/deployments/helm/dra-example-driver/templates/kubeletplugin.yaml b/deployments/helm/dra-example-driver/templates/kubeletplugin.yaml
+index dfedf39..98780e1 100644
+--- a/deployments/helm/dra-example-driver/templates/kubeletplugin.yaml
++++ b/deployments/helm/dra-example-driver/templates/kubeletplugin.yaml
+@@ -124,6 +124,8 @@ spec:
+               fieldPath: metadata.uid
+         - name: BINDING_CONDITIONS
+           value: {{ .Values.kubeletPlugin.bindingConditions | quote }}
++        - name: GPUFIT_SCORES_CONFIGMAP
++          value: {{ .Values.kubeletPlugin.gpufitScoresConfigMap | quote }}
+         volumeMounts:
+         - name: plugins-registry
+           mountPath: {{ .Values.kubeletPlugin.kubeletRegistrarDirectoryPath | quote }}
+diff --git a/deployments/helm/dra-example-driver/templates/role.yaml b/deployments/helm/dra-example-driver/templates/role.yaml
+index afe7b88..756a0d6 100644
+--- a/deployments/helm/dra-example-driver/templates/role.yaml
++++ b/deployments/helm/dra-example-driver/templates/role.yaml
+@@ -14,3 +14,17 @@ rules:
+   resources: ["pods"]
+   verbs: ["watch"]
+ {{- end }}
++{{- if .Values.kubeletPlugin.gpufitScoresConfigMap }}
++---
++# GPUFit: let the kubelet plugin read its scores ConfigMap (and nothing else).
++apiVersion: rbac.authorization.k8s.io/v1
++kind: Role
++metadata:
++  name: {{ include "dra-example-driver.fullname" . }}-gpufit-role
++  namespace: {{ include "dra-example-driver.namespace" . }}
++rules:
++- apiGroups: [""]
++  resources: ["configmaps"]
++  resourceNames: [{{ .Values.kubeletPlugin.gpufitScoresConfigMap | quote }}]
++  verbs: ["get"]
++{{- end }}
+diff --git a/deployments/helm/dra-example-driver/templates/rolebinding.yaml b/deployments/helm/dra-example-driver/templates/rolebinding.yaml
+index b8326d6..707082a 100644
+--- a/deployments/helm/dra-example-driver/templates/rolebinding.yaml
++++ b/deployments/helm/dra-example-driver/templates/rolebinding.yaml
+@@ -14,3 +14,19 @@ roleRef:
+   name: {{ include "dra-example-driver.fullname" . }}-pods-role
+   apiGroup: rbac.authorization.k8s.io
+ {{- end }}
++{{- if .Values.kubeletPlugin.gpufitScoresConfigMap }}
++---
++apiVersion: rbac.authorization.k8s.io/v1
++kind: RoleBinding
++metadata:
++  name: {{ include "dra-example-driver.fullname" . }}-gpufit-role-binding
++  namespace: {{ include "dra-example-driver.namespace" . }}
++subjects:
++- kind: ServiceAccount
++  name: {{ include "dra-example-driver.serviceAccountName" . }}
++  namespace: {{ include "dra-example-driver.namespace" . }}
++roleRef:
++  kind: Role
++  name: {{ include "dra-example-driver.fullname" . }}-gpufit-role
++  apiGroup: rbac.authorization.k8s.io
++{{- end }}
+diff --git a/deployments/helm/dra-example-driver/values.yaml b/deployments/helm/dra-example-driver/values.yaml
+index a12b2aa..f06adb4 100644
+--- a/deployments/helm/dra-example-driver/values.yaml
++++ b/deployments/helm/dra-example-driver/values.yaml
+@@ -112,6 +112,10 @@ kubeletPlugin:
+   # devices report healthy until pinned via a health.example.com/<device>
+   # annotation on the driver pod, which keeps the demo deterministic.
+   simulateHealthChanges: false
++  # gpufitScoresConfigMap is the name of a ConfigMap in the driver's namespace
++  # holding GPUFit workload scores (key scores.json). When set, the driver
++  # publishes them as gpufit.io/<workload>Score device attributes. Empty disables GPUFit.
++  gpufitScoresConfigMap: ""
+   containers:
+     init:
+       securityContext: {}
+-- 
+2.55.0
+

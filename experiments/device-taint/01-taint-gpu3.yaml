@@ -1,0 +1,13 @@
+apiVersion: resource.k8s.io/v1
+kind: DeviceTaintRule
+metadata:
+  name: gpu3-degraded
+spec:
+  deviceSelector:
+    driver: gpu.example.com
+    pool: dra-example-driver-cluster-worker
+    device: gpu-3
+  taint:
+    key: gpufit.io/degraded
+    value: training
+    effect: NoSchedule
