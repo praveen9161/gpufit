@@ -97,3 +97,21 @@ Training scores set by hand, best on the highest numbers: gpu-0=80, 83, 86, 89, 
   -> "best tier that fits". Coarse (tiers, not true ranking) but pure upstream API. Could be generated
   for users (webhook / claim template helper) so they only say "training, min 80".
 - Don't spend time on a custom scheduler plugin now; upstream says scoring is coming. Revisit later.
+
+## 2026-09-29 — firstAvailable tiers: "best tier still free" works today
+Guided script: `experiments/tiers/run.sh`. Same ascending scores (gpu-0=80 ... gpu-7=100).
+One template, options tried in order: min95 -> min90 -> min80 (2 GPUs each; a 4-GPU variant for job-d).
+- job-a (all free)          -> gpu-5 (95), gpu-6 (98)  via min95
+- job-b (only gpu-7 >= 95)  -> gpu-4 (92), gpu-7 (100) via min90
+- job-c (only 80-89 left)   -> gpu-0 (80), gpu-1 (83)  via min80
+- job-d (4 GPUs, 2 free)    -> Pending, same generic "cannot allocate all claims" (no hint about options)
+- free job-a's GPUs         -> job-d starts: gpu-2, 3, 5, 6 via min80
+- Which option was used is recorded in the claim: `status.allocation.devices.results[].request` =
+  `gpus/min95`. Dashboard shows it as TIER.
+- Several pods can share one ResourceClaimTemplate; each gets its own claim.
+
+**Limits:**
+- Coarse: inside a tier it's still first-fit (job-a got 95+98, not 98+100; job-b's min90 took gpu-7=100).
+- Greedy per job, no global view: an early small job can take the top tier a later big job needed.
+- Each option repeats the whole request (class, count, selector) -> verbose YAML. Users shouldn't
+  hand-write this; GPUFit should generate it from "workload=training, min=80".

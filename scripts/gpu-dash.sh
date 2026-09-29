@@ -76,15 +76,18 @@ snapshot() {
         | "gpu " + join(",")
       else join(",") end;
     if ($p.items | length) == 0 then "(none)" else
-    ["POD","PHASE","ASKED","GOT","CLAIM"],
+    ["POD","PHASE","ASKED","GOT","CLAIM","TIER"],
     ( $p.items[] | .metadata.name as $pn
       # claims generated from a template are owned by their pod
       | ([ $c.items[] | select(.metadata.ownerReferences // [] | map(.name) | index($pn) != null) ]) as $mine
       | [ $pn,
           .status.phase,
-          ([ $mine[].spec.devices.requests[]? | .exactly.count // 1 ] | add // 0 | tostring),
+          # firstAvailable requests: show the count of the first (preferred) option
+          ([ $mine[].spec.devices.requests[]? | .exactly.count // .firstAvailable[0].count // 1 ] | add // 0 | tostring),
           ([ $mine[].status.allocation.devices.results[]?.device ] | compact),
-          ([ $mine[] | if .status.allocation then "allocated" else "pending" end ] | join(",") | if . == "" then "-" else . end) ] )
+          ([ $mine[] | if .status.allocation then "allocated" else "pending" end ] | join(",") | if . == "" then "-" else . end),
+          # which firstAvailable option was used: results[].request is "<request>/<option>"
+          ([ $mine[].status.allocation.devices.results[]?.request | select(contains("/")) | split("/")[1] ] | unique | join(",") | if . == "" then "-" else . end) ] )
     | @tsv end' | column -t -s $'\t'
   echo
 

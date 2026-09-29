@@ -7,37 +7,7 @@
 # Keep ./scripts/gpu-dash.sh open in a second terminal to watch the cluster.
 set -euo pipefail
 cd "$(dirname "$0")"
-AUTO="${AUTO:-0}"
-NS=gpufit-lab
-
-# ---- helpers ------------------------------------------------------------------
-step() { printf '\n\033[1;36m━━ STEP %s ━━\033[0m\n' "$1"; shift; printf '%s\n' "$@"; }
-run()  { printf '\n\033[1;33m$ %s\033[0m\n' "$*"; eval "$@"; }
-note() { printf '\n\033[1;32m→ %s\033[0m\n' "$*"; }
-pause() { [[ "$AUTO" == 1 ]] || read -rp $'\n[Enter] to continue, Ctrl-C to stop... ' _; }
-
-# Print "gpu-N (training score)" for each GPU a pod's claim was given.
-show_got() {
-  local pod=$1 claim
-  claim=$(kubectl get pod -n "$NS" "$pod" -o jsonpath='{.status.resourceClaimStatuses[0].resourceClaimName}')
-  local devices scores
-  devices=$(kubectl get resourceclaim -n "$NS" "$claim" -o json | jq -c '[.status.allocation.devices.results[].device]')
-  scores=$(kubectl get resourceslices -o json | jq -c '[.items[].spec.devices[] | {key: .name, value: .attributes["gpufit.io/trainingScore"].int}] | from_entries')
-  jq -rn --argjson d "$devices" --argjson s "$scores" \
-    '"\($d | map("\(.) (training \($s[.]))") | join(", "))"'
-}
-
-# Wait until the ResourceSlice shows the training scores we just applied.
-wait_for_scores() {
-  local want=$1 got=""
-  for _ in $(seq 1 30); do
-    got=$(kubectl get resourceslices -o json | jq -c '[.items[].spec.devices[] | {key: .name, value: .attributes["gpufit.io/trainingScore"].int}] | from_entries')
-    [[ "$got" == "$want" ]] && { echo "slice updated: $got"; return; }
-    sleep 1
-  done
-  echo "timed out waiting for scores; last seen: $got" >&2
-  exit 1
-}
+source ../../scripts/guided-lib.sh
 
 # ---- experiment ---------------------------------------------------------------
 kubectl get ns "$NS" >/dev/null 2>&1 || kubectl create ns "$NS" >/dev/null

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: gpufit-lab
+  name: job-b
+spec:
+  terminationGracePeriodSeconds: 0
+  containers:
+  - name: ctr
+    image: ubuntu:24.04
+    command: ["sleep", "9999"]
+    resources:
+      claims:
+      - name: gpus
+  resourceClaims:
+  - name: gpus
+    resourceClaimTemplateName: training-tiered-2

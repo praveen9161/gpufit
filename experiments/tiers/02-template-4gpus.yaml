@@ -1,0 +1,34 @@
+# Try the best tier first; the scheduler only looks at the next option
+# if the previous one can't be satisfied. Scores come from GPUFit.
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  namespace: gpufit-lab
+  name: training-tiered-4
+spec:
+  spec:
+    devices:
+      requests:
+      - name: gpus
+        firstAvailable:
+        - name: min95
+          deviceClassName: gpu.example.com
+          allocationMode: ExactCount
+          count: 4
+          selectors:
+          - cel:
+              expression: device.attributes["gpufit.io"].trainingScore >= 95
+        - name: min90
+          deviceClassName: gpu.example.com
+          allocationMode: ExactCount
+          count: 4
+          selectors:
+          - cel:
+              expression: device.attributes["gpufit.io"].trainingScore >= 90
+        - name: min80
+          deviceClassName: gpu.example.com
+          allocationMode: ExactCount
+          count: 4
+          selectors:
+          - cel:
+              expression: device.attributes["gpufit.io"].trainingScore >= 80
