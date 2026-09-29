@@ -1,0 +1,11 @@
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "gpufit-scores",
+    "namespace": "dra-example-driver"
+  },
+  "data": {
+    "scores.json": "{\"gpu-0\":{\"training\":80,\"finetune\":100,\"inference\":100},\"gpu-1\":{\"training\":83,\"finetune\":100,\"inference\":100},\"gpu-2\":{\"training\":86,\"finetune\":100,\"inference\":100},\"gpu-3\":{\"training\":89,\"finetune\":100,\"inference\":100},\"gpu-4\":{\"training\":92,\"finetune\":100,\"inference\":100},\"gpu-5\":{\"training\":95,\"finetune\":100,\"inference\":100},\"gpu-6\":{\"training\":98,\"finetune\":100,\"inference\":100},\"gpu-7\":{\"training\":100,\"finetune\":100,\"inference\":100}}"
+  }
+}

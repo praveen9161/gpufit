@@ -80,3 +80,20 @@ Open questions / next:
   scheduler prefer higher scores? (training-7 needed all 7 qualifying GPUs, so this run can't tell.)
   Expectation: no, it picks any qualifying device. Test next with e.g. training-2.
 - Polling a ConfigMap is fine for a demo; a watch/informer would be faster and cheaper.
+
+## 2026-09-29 — Does the scheduler rank by score? No.
+Guided script: `experiments/ranking/run.sh` (AUTO=1 to run straight through).
+Training scores set by hand, best on the highest numbers: gpu-0=80, 83, 86, 89, 92, 95, 98, gpu-7=100.
+- 2 GPUs with trainingScore >= 80 (all 8 qualify) -> gpu-0 + gpu-1 (80, 83), the two WORST passing
+  GPUs. Same result in 4 out of 4 runs (deterministic first-fit in slice order).
+- 2 GPUs with >= 95 -> gpu-5 + gpu-6 (95, 98), again not the best pair (98, 100).
+- Confirmed by the API docs (`kubectl explain ...requests.firstAvailable`): "DRA does not yet implement
+  scoring, so the scheduler will select the first set of devices that satisfies all the requests ...
+  Scoring will be implemented later."
+
+**Design implications:**
+- CEL thresholds = filter only. Among qualifying GPUs, placement is arbitrary (effectively device order).
+- Workaround available today: `firstAvailable` subrequests tried in order, e.g. >=95, then >=90, then >=80
+  -> "best tier that fits". Coarse (tiers, not true ranking) but pure upstream API. Could be generated
+  for users (webhook / claim template helper) so they only say "training, min 80".
+- Don't spend time on a custom scheduler plugin now; upstream says scoring is coming. Revisit later.
