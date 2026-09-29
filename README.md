@@ -26,8 +26,9 @@ are next.
 
 | Path | What |
 |------|------|
-| `agent/` | Go: fitness scoring (`internal/fitness`), `gpufit-agent` (writes the scores ConfigMap), `gpufit-claim` (writes tiered claim templates) |
-| `driver-patch/` | Patch for dra-example-driver: publishes the ConfigMap scores as `gpufit.io/<workload>Score` attributes |
+| `agent/` | Go: fitness scoring (`internal/fitness`), health collectors (`internal/collect`), `gpufit-agent` (per-node loop: collect -> score -> publish), `gpufit-claim` (writes tiered claim templates) |
+| `deploy/agent/` | Agent image build, DaemonSet + least-privilege RBAC, fake metrics ConfigMap |
+| `driver-patch/` | Patches for dra-example-driver: publish each node's scores as `gpufit.io/<workload>Score` device attributes |
 | `experiments/` | Manifests for each experiment (Pending pods, device taints, fitness scheduling) |
 | `scripts/gpu-dash.sh` | Live terminal view of GPUs, scores, pods and claims |
 | `notes.md` | Experiment log and design notes |
@@ -43,23 +44,33 @@ git clone https://github.com/kubernetes-sigs/dra-example-driver
 cd dra-example-driver
 git checkout -b gpufit 812a3f2
 git am ../driver-patch/*.patch
-DRIVER_IMAGE_TAG=v0.5.0-gpufit ./demo/scripts/build-driver-image.sh
-DRIVER_IMAGE_TAG=v0.5.0-gpufit ./demo/scripts/load-driver-image-into-kind.sh
+DRIVER_IMAGE_TAG=v0.5.0-gpufit-2 ./demo/scripts/build-driver-image.sh
+DRIVER_IMAGE_TAG=v0.5.0-gpufit-2 ./demo/scripts/load-driver-image-into-kind.sh
 helm upgrade --install dra-example-driver deployments/helm/dra-example-driver \
   -n dra-example-driver --create-namespace \
-  --set image.tag=v0.5.0-gpufit --set kubeletPlugin.gpufitScoresConfigMap=gpufit-scores
+  --set image.tag=v0.5.0-gpufit-2 --set kubeletPlugin.gpufitScoresConfigMap=gpufit-scores
 cd ..
 
-# scores -> cluster, then schedule by fitness
-(cd agent && go run ./cmd/gpufit-agent -o configmap | kubectl apply -f -)
+# agent: one pod per GPU node, publishes scores every 5s
+./deploy/agent/build.sh
+kubectl apply -f deploy/agent/fake-metrics.yaml -f deploy/agent/agent.yaml
+kubectl logs -n dra-example-driver -l app=gpufit-agent
+
+# schedule by fitness
 kubectl create namespace gpufit-lab
 (cd agent && go run ./cmd/gpufit-claim -workload training -min 80 -count 6 | kubectl apply -f -)
 kubectl apply -f experiments/claim-generator/11-train-job.yaml
 ./scripts/gpu-dash.sh --once
 ```
 
-Or walk through it step by step: `./experiments/claim-generator/run.sh`
-(keep `./scripts/gpu-dash.sh` open in a second terminal).
+Or walk through it step by step (keep `./scripts/gpu-dash.sh` open in a second terminal):
+
+- `./experiments/claim-generator/run.sh`: training vs inference placement
+- `./experiments/in-cluster-agent/run.sh`: break a GPU's NVLink, watch scores and placement follow
+
+Health comes from a pluggable collector. On kind it's `fake` (ConfigMap
+`gpufit-fake-metrics`, edit it to degrade a GPU); an `nvidia-smi` collector for
+real GPUs is next.
 
 DRA doesn't rank devices by score yet, so `gpufit-claim` lists
 `firstAvailable` options from strictest to loosest (score >= 95, >= 90, >= min):

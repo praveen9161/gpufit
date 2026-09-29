@@ -1,0 +1,84 @@
+From ec21d2ac1debcfad17683b2b618fb00877c28304 Mon Sep 17 00:00:00 2001
+From: Praveen <113331169+praveen9161@users.noreply.github.com>
+Date: Tue, 29 Sep 2026 13:29:18 -0500
+Subject: [PATCH 2/2] GPUFit: read per-node scores key, fall back to
+ scores.json
+
+The in-cluster gpufit-agent on each node server-side-applies its own key
+"<node>.json" into the scores ConfigMap. The driver now prefers its node's
+key and falls back to the cluster-wide "scores.json" written by the CLI.
+
+---
+ .../gpufit_scores.go                          | 20 +++++++++++++++----
+ .../gpufit_scores_test.go                     | 13 ++++++++++++
+ 2 files changed, 29 insertions(+), 4 deletions(-)
+
+diff --git a/cmd/dra-example-kubeletplugin/gpufit_scores.go b/cmd/dra-example-kubeletplugin/gpufit_scores.go
+index fac0500..7f45191 100644
+--- a/cmd/dra-example-kubeletplugin/gpufit_scores.go
++++ b/cmd/dra-example-kubeletplugin/gpufit_scores.go
+@@ -21,7 +21,11 @@ package main
+ // Scores live in a ConfigMap in the driver's namespace, written by gpufit-agent:
+ //
+ //	data:
+-//	  scores.json: {"gpu-0": {"training": 100, "finetune": 100, "inference": 100}, ...}
++//	  <node>.json: {"gpu-0": {"training": 100, "finetune": 100, "inference": 100}, ...}
++//	  scores.json: same format, used by nodes that have no key of their own
++//
++// The in-cluster agent on each node writes "<node>.json"; "scores.json" is the
++// cluster-wide fallback written by the gpufit-agent CLI.
+ //
+ // The driver polls it and, whenever it changes, republishes its ResourceSlices
+ // with one attribute per workload: gpufit.io/trainingScore, gpufit.io/finetuneScore,
+@@ -137,8 +141,8 @@ func (d *driver) gpufitScoresLoop(ctx context.Context, namespace, configMap stri
+ 	}
+ }
+ 
+-// readGPUFitScores returns the raw scores JSON, or "" if the ConfigMap or key
+-// doesn't exist.
++// readGPUFitScores returns the raw scores JSON for this node, or "" if the
++// ConfigMap or both keys don't exist.
+ func (d *driver) readGPUFitScores(ctx context.Context, namespace, configMap string) (string, error) {
+ 	cm, err := d.client.CoreV1().ConfigMaps(namespace).Get(ctx, configMap, metav1.GetOptions{})
+ 	if apierrors.IsNotFound(err) {
+@@ -147,7 +151,15 @@ func (d *driver) readGPUFitScores(ctx context.Context, namespace, configMap stri
+ 	if err != nil {
+ 		return "", err
+ 	}
+-	return cm.Data[gpufitScoresKey], nil
++	return pickGPUFitScores(cm.Data, d.config.flags.nodeName), nil
++}
++
++// pickGPUFitScores prefers this node's own key over the cluster-wide one.
++func pickGPUFitScores(data map[string]string, node string) string {
++	if raw, ok := data[node+".json"]; ok {
++		return raw
++	}
++	return data[gpufitScoresKey]
+ }
+ 
+ func (d *driver) publishGPUFitScores(ctx context.Context, raw string) error {
+diff --git a/cmd/dra-example-kubeletplugin/gpufit_scores_test.go b/cmd/dra-example-kubeletplugin/gpufit_scores_test.go
+index 0283356..c9622f5 100644
+--- a/cmd/dra-example-kubeletplugin/gpufit_scores_test.go
++++ b/cmd/dra-example-kubeletplugin/gpufit_scores_test.go
+@@ -77,3 +77,16 @@ func TestParseGPUFitScoresRejectsBadInput(t *testing.T) {
+ 		}
+ 	}
+ }
++
++func TestPickGPUFitScores(t *testing.T) {
++	data := map[string]string{"node-a.json": "A", "scores.json": "ALL"}
++	if got := pickGPUFitScores(data, "node-a"); got != "A" {
++		t.Errorf("node-a: got %q, want its own key", got)
++	}
++	if got := pickGPUFitScores(data, "node-b"); got != "ALL" {
++		t.Errorf("node-b: got %q, want the scores.json fallback", got)
++	}
++	if got := pickGPUFitScores(map[string]string{}, "node-a"); got != "" {
++		t.Errorf("empty: got %q, want \"\"", got)
++	}
++}
+-- 
+2.55.0
+

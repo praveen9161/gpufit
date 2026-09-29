@@ -126,3 +126,23 @@ gpu-5 slower/hot; fake metrics):
 - inference x1, min 80 -> gpu-5 via min80 (inference 85). All 8 GPUs busy, none wasted.
 - MutatingAdmissionPolicy is served at admissionregistration.k8s.io/v1 on this 1.37 cluster
   -> the in-cluster version (user only adds labels, the API server rewrites the claim) needs no webhook server.
+
+## 2026-09-29 — Agent runs in-cluster (DaemonSet, per-node scores)
+- `gpufit-agent run`: every 5s collector.Collect() -> ScoreAll -> server-side apply of key
+  `<node>.json` in `gpufit-scores` (field manager `gpufit-agent-<node>`; each node owns its key,
+  managedFields shows it). Re-applying unchanged data is a no-op, so it applies every tick and self-heals.
+- Collector interface (`internal/collect`); `fake` reads ConfigMap `gpufit-fake-metrics`
+  (`<node>.json` overrides `metrics.json`). nvidia-smi collector next.
+- Driver (patch 0002, image v0.5.0-gpufit-2) reads `<node>.json`, falls back to `scores.json`.
+- Image: host cross-compile + distroless static nonroot. RBAC: get fake metrics, get+patch scores,
+  by resourceName only. gpufit-scores is created by the manifest because RBAC can't limit "create"
+  to a name.
+- Gotcha: `kubectl apply` of the empty gpufit-scores removed the old `scores.json` key (it was in the
+  last-applied annotation from the CLI). Fine here, but CLI and agent shouldn't both manage that ConfigMap.
+- Gotcha: `kubectl get -o json` hides managedFields unless `--show-managed-fields`.
+
+Run with the guided demo (`experiments/in-cluster-agent/run.sh`), fake metrics:
+- gpu-6 nvlink 1.0 -> 0.5: published training score 100 -> 0 after ~5s; agent log:
+  `gpu-6: training 100 -> 0 (nvlink 0.50 < floor 0.90), finetune 100 -> 90 ...`
+- training x6 min80 then got gpu-0,1,2,4,5,7 via min90 (5 GPUs >= 95 wasn't enough).
+- gpu-6 repaired -> back to 100 after ~7s; the running job kept its GPUs (only new allocations change).

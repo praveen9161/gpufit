@@ -1,0 +1,93 @@
+# gpufit-agent: one pod per GPU node. Every 5s it collects GPU health, scores
+# it, and writes key "<node>.json" of ConfigMap gpufit-scores. The DRA driver
+# on the node reads that key and publishes the scores as device attributes.
+#
+# Lives in the driver's namespace because the driver reads the ConfigMap there.
+#
+#   kubectl apply -f deploy/agent/agent.yaml
+#   kubectl logs -n dra-example-driver -l app=gpufit-agent -f
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpufit-agent
+  namespace: dra-example-driver
+---
+# Least privilege: read the fake metrics, read+patch the scores. Nothing else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gpufit-agent
+  namespace: dra-example-driver
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-fake-metrics"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-scores"]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gpufit-agent
+  namespace: dra-example-driver
+subjects:
+- kind: ServiceAccount
+  name: gpufit-agent
+  namespace: dra-example-driver
+roleRef:
+  kind: Role
+  name: gpufit-agent
+  apiGroup: rbac.authorization.k8s.io
+---
+# Created up front so the agent only needs "patch" (RBAC can't restrict
+# "create" to a resource name). The agents fill in one key per node.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpufit-scores
+  namespace: dra-example-driver
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: gpufit-agent
+  namespace: dra-example-driver
+spec:
+  selector:
+    matchLabels:
+      app: gpufit-agent
+  template:
+    metadata:
+      labels:
+        app: gpufit-agent
+    spec:
+      serviceAccountName: gpufit-agent
+      # No tolerations: skips the tainted control-plane, runs on the GPU worker.
+      containers:
+      - name: agent
+        image: gpufit-agent:dev
+        imagePullPolicy: Never   # image is loaded into kind by build.sh
+        args: ["run", "--collector=fake", "--interval=5s"]
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]

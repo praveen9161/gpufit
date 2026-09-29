@@ -1,11 +1,8 @@
-// gpufit-agent reads per-GPU health ratios and prints workload fitness scores.
-//
-// For now health comes from a JSON file (fake metrics for the simulated GPUs).
-// Later a collector will produce the same data from real hardware, and the
-// scores will be published to Kubernetes as DRA device attributes.
+// gpufit-agent turns per-GPU health ratios into workload fitness scores.
 //
 // Usage:
 //
+//	gpufit-agent run [flags]                                     # in-cluster loop, see run.go
 //	gpufit-agent -metrics testdata/metrics.json                  # print a table
 //	gpufit-agent -metrics testdata/metrics.json -o configmap | kubectl apply -f -
 //
@@ -25,6 +22,14 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "run" {
+		if err := runAgent(os.Args[2:]); err != nil {
+			fmt.Fprintln(os.Stderr, "gpufit-agent:", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	path := flag.String("metrics", "testdata/metrics.json", "JSON file: {\"gpu-0\": {\"compute\": 1.0, ...}, ...}")
 	output := flag.String("o", "table", "output format: table | configmap")
 	namespace := flag.String("namespace", "dra-example-driver", "namespace of the scores ConfigMap (the driver's namespace)")
@@ -104,18 +109,11 @@ func runConfigMap(path, namespace, name string) error {
 		return err
 	}
 
-	scores := make(map[string]map[string]int, len(gpus))
-	for gpu, h := range gpus {
-		scores[gpu] = make(map[string]int, len(fitness.DefaultProfiles))
-		for _, p := range fitness.DefaultProfiles {
-			r, err := fitness.Score(h, p)
-			if err != nil {
-				return fmt.Errorf("%s: %w", gpu, err)
-			}
-			scores[gpu][p.Name] = r.Score
-		}
+	results, err := fitness.ScoreAll(gpus)
+	if err != nil {
+		return err
 	}
-	scoresJSON, err := json.Marshal(scores) // map keys are sorted, so output is stable
+	scoresJSON, err := json.Marshal(fitness.ScoreValues(results)) // map keys are sorted, so output is stable
 	if err != nil {
 		return err
 	}

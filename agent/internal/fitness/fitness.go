@@ -136,3 +136,33 @@ func weakest(h Health, p Profile) string {
 	sort.Slice(costs, func(i, j int) bool { return costs[i].loss > costs[j].loss })
 	return fmt.Sprintf("weakest: %s %.2f", costs[0].c, h[costs[0].c])
 }
+
+// ScoreAll scores every GPU for every default profile:
+// GPU name -> workload name -> Result.
+func ScoreAll(gpus map[string]Health) (map[string]map[string]Result, error) {
+	out := make(map[string]map[string]Result, len(gpus))
+	for gpu, h := range gpus {
+		out[gpu] = make(map[string]Result, len(DefaultProfiles))
+		for _, p := range DefaultProfiles {
+			r, err := Score(h, p)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", gpu, err)
+			}
+			out[gpu][p.Name] = r
+		}
+	}
+	return out, nil
+}
+
+// ScoreValues keeps only the numbers: GPU name -> workload name -> score.
+// This is the scores.json format the DRA driver reads.
+func ScoreValues(results map[string]map[string]Result) map[string]map[string]int {
+	out := make(map[string]map[string]int, len(results))
+	for gpu, byWorkload := range results {
+		out[gpu] = make(map[string]int, len(byWorkload))
+		for w, r := range byWorkload {
+			out[gpu][w] = r.Score
+		}
+	}
+	return out
+}

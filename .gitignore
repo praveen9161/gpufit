@@ -5,3 +5,4 @@
 /agent/gpufit-agent
 
 .DS_Store
+/agent/bin/
