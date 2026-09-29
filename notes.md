@@ -115,3 +115,14 @@ One template, options tried in order: min95 -> min90 -> min80 (2 GPUs each; a 4-
 - Greedy per job, no global view: an early small job can take the top tier a later big job needed.
 - Each option repeats the whole request (class, count, selector) -> verbose YAML. Users shouldn't
   hand-write this; GPUFit should generate it from "workload=training, min=80".
+
+## 2026-09-29 — gpufit-claim: users ask for "workload + min score", not YAML
+`agent/cmd/gpufit-claim` (logic in `agent/internal/claims`, tested): prints a ResourceClaimTemplate with
+firstAvailable tiers (default prefer 95, 90, then -min). Workload must be a fitness profile name.
+Guided demo `experiments/claim-generator/run.sh`, with the agent's normal scores (gpu-3 NVLink broken,
+gpu-5 slower/hot; fake metrics):
+- training x6, min 80  -> gpu-0,1,2,4,6,7 via min95 (skips gpu-3=0 and gpu-5=91)
+- inference x1, min 80 -> gpu-3 via min95 (inference 100). Useless for training, best for inference.
+- inference x1, min 80 -> gpu-5 via min80 (inference 85). All 8 GPUs busy, none wasted.
+- MutatingAdmissionPolicy is served at admissionregistration.k8s.io/v1 on this 1.37 cluster
+  -> the in-cluster version (user only adds labels, the API server rewrites the claim) needs no webhook server.

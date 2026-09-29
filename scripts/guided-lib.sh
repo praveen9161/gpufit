@@ -10,22 +10,25 @@ run()  { printf '\n\033[1;33m$ %s\033[0m\n' "$*"; eval "$@"; }
 note() { printf '\n\033[1;32m→ %s\033[0m\n' "$*"; }
 pause() { [[ "$AUTO" == 1 ]] || read -rp $'\n[Enter] to continue, Ctrl-C to stop... ' _; }
 
-# {"gpu-0": <trainingScore>, ...} as currently published in the ResourceSlices.
-training_scores() {
-  kubectl get resourceslices -o json |
-    jq -c '[.items[].spec.devices[] | {key: .name, value: .attributes["gpufit.io/trainingScore"].int}] | from_entries'
+# {"gpu-0": <score>, ...} as currently published in the ResourceSlices.
+# $1 = workload (default training).
+workload_scores() {
+  kubectl get resourceslices -o json | jq -c --arg attr "gpufit.io/${1:-training}Score" \
+    '[.items[].spec.devices[] | {key: .name, value: .attributes[$attr].int}] | from_entries'
 }
+training_scores() { workload_scores training; }
 
-# Print "gpu-N (training S), ..." for the GPUs a pod's claim was given, plus
+# Print "gpu-N (<workload> S), ..." for the GPUs a pod's claim was given, plus
 # " via <option>" when the claim used a firstAvailable option.
+# $2 = workload whose score to show (default training).
 show_got() {
-  local pod=$1 claim alloc scores
+  local pod=$1 workload=${2:-training} claim alloc scores
   claim=$(kubectl get pod -n "$NS" "$pod" -o jsonpath='{.status.resourceClaimStatuses[0].resourceClaimName}')
   alloc=$(kubectl get resourceclaim -n "$NS" "$claim" -o json | jq -c '[.status.allocation.devices.results[]? | {device, request}]')
-  scores=$(training_scores)
-  jq -rn --argjson a "$alloc" --argjson s "$scores" '
+  scores=$(workload_scores "$workload")
+  jq -rn --argjson a "$alloc" --argjson s "$scores" --arg w "$workload" '
     if ($a | length) == 0 then "nothing (not allocated)" else
-    ($a | map("\(.device) (training \($s[.device]))") | join(", "))
+    ($a | map("\(.device) (\($w) \($s[.device]))") | join(", "))
     + ([$a[].request | select(contains("/")) | split("/")[1]] | unique
        | if length > 0 then "  via option " + join(",") else "" end) end'
 }

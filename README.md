@@ -26,7 +26,7 @@ are next.
 
 | Path | What |
 |------|------|
-| `agent/` | Go: fitness scoring (`internal/fitness`) and `gpufit-agent` CLI that writes the scores ConfigMap |
+| `agent/` | Go: fitness scoring (`internal/fitness`), `gpufit-agent` (writes the scores ConfigMap), `gpufit-claim` (writes tiered claim templates) |
 | `driver-patch/` | Patch for dra-example-driver: publishes the ConfigMap scores as `gpufit.io/<workload>Score` attributes |
 | `experiments/` | Manifests for each experiment (Pending pods, device taints, fitness scheduling) |
 | `scripts/gpu-dash.sh` | Live terminal view of GPUs, scores, pods and claims |
@@ -53,7 +53,14 @@ cd ..
 # scores -> cluster, then schedule by fitness
 (cd agent && go run ./cmd/gpufit-agent -o configmap | kubectl apply -f -)
 kubectl create namespace gpufit-lab
-kubectl apply -f experiments/fitness-scheduling/01-training-7.yaml
-kubectl apply -f experiments/fitness-scheduling/02-inference-1.yaml
+(cd agent && go run ./cmd/gpufit-claim -workload training -min 80 -count 6 | kubectl apply -f -)
+kubectl apply -f experiments/claim-generator/11-train-job.yaml
 ./scripts/gpu-dash.sh --once
 ```
+
+Or walk through it step by step: `./experiments/claim-generator/run.sh`
+(keep `./scripts/gpu-dash.sh` open in a second terminal).
+
+DRA doesn't rank devices by score yet, so `gpufit-claim` lists
+`firstAvailable` options from strictest to loosest (score >= 95, >= 90, >= min):
+the job gets the best tier that is still free.
