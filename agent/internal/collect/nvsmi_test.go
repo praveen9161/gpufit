@@ -205,6 +205,12 @@ func TestRealT4Captures(t *testing.T) {
 	if !near(ec.Health[fitness.Compute], 60.0/70) {
 		t.Errorf("60 W compute = %.3f (%s), want %.3f", ec.Health[fitness.Compute], ec.Why[fitness.Compute], 60.0/70)
 	}
+	if got := capped.ThrottleCountersUS["sw_power_cap"]; got != 48339072 {
+		t.Errorf("sw_power_cap counter = %v us, want 48339072", got)
+	}
+	if capped.PowerDrawW <= 0 {
+		t.Errorf("instant power draw = %v, want > 0", capped.PowerDrawW)
+	}
 	if len(capped.ActiveEvents) == 0 || capped.ActiveEvents[0] != "sw_power_cap" {
 		t.Errorf("events under load = %v, want sw_power_cap", capped.ActiveEvents)
 	}

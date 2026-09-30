@@ -6,6 +6,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/praveen9161/gpufit/agent/internal/collect"
@@ -46,8 +47,11 @@ func explainXML(args []string) error {
 	for _, r := range readings {
 		e := collect.Ratios(r, p)
 		fmt.Printf("%s  %s  %s\n", r.Name, r.Product, r.UUID)
-		fmt.Printf("  readings: power %s/%s W, temp %s C (slowdown %s C), active events: %s\n",
-			f0(r.PowerLimitW), f0(r.DefaultPowerLimitW), f0(r.TempC), f0(r.SlowdownTempC), orNone(r.ActiveEvents))
+		fmt.Printf("  readings: power %s/%s W (drawing %s W), temp %s C (slowdown %s C), active events: %s\n",
+			f0(r.PowerLimitW), f0(r.DefaultPowerLimitW), f0(r.PowerDrawW), f0(r.TempC), f0(r.SlowdownTempC), orNone(r.ActiveEvents))
+		if len(r.ThrottleCountersUS) > 0 {
+			fmt.Printf("  throttle time since driver load (not scored yet): %s\n", counters(r.ThrottleCountersUS))
+		}
 		for _, c := range fitness.Components {
 			fmt.Printf("  %-8s %.2f  %s\n", c, e.Health[c], e.Why[c])
 		}
@@ -80,4 +84,17 @@ func orNone(s []string) string {
 		return "none"
 	}
 	return strings.Join(s, ", ")
+}
+
+func counters(m map[string]float64) string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var parts []string
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%s %.1fs", k, m[k]/1e6))
+	}
+	return strings.Join(parts, ", ")
 }

@@ -33,6 +33,15 @@ type Reading struct {
 	// "sw_power_cap", "hw_thermal_slowdown".
 	ActiveEvents []string
 
+	// Cumulative microseconds per throttle reason (clocks_event_reasons_counters),
+	// e.g. "sw_power_cap". Recorded and shown, NOT used for scoring yet: on the
+	// T4 (driver 595.91.07) sw_power_cap stayed 0 while the flag was Active at
+	// the default limit, and only counted once the limit was lowered. Semantics
+	// need more measurements first. nil if the driver doesn't report them.
+	ThrottleCountersUS map[string]float64
+
+	PowerDrawW float64 // instant power draw (informational)
+
 	UncorrectableECC  float64 // volatile (since driver load); NaN if ECC is off/unsupported
 	PendingRetirement bool    // retired pages waiting for a GPU reset
 	RemapPending      bool    // row remapping waiting for a GPU reset
@@ -241,6 +250,8 @@ func ParseXML(data []byte) ([]Reading, error) {
 		r.UUID, _ = g.text("uuid")
 		r.Product, _ = g.text("product_name")
 		r.ActiveEvents = activeEvents(g)
+		r.ThrottleCountersUS = throttleCounters(g)
+		r.PowerDrawW = g.num("gpu_power_readings/instant_power_draw", "power_readings/power_draw")
 		out = append(out, r)
 	}
 	if len(out) == 0 {
@@ -263,6 +274,20 @@ func activeEvents(g *node) []string {
 			name := strings.TrimPrefix(c.XMLName.Local, "clocks_event_reason_")
 			name = strings.TrimPrefix(name, "clocks_throttle_reason_")
 			out = append(out, name)
+		}
+	}
+	return out
+}
+
+func throttleCounters(g *node) map[string]float64 {
+	b := g.child("clocks_event_reasons_counters")
+	if b == nil {
+		return nil
+	}
+	out := map[string]float64{}
+	for _, c := range b.Nodes {
+		if v := parseNum(c.Text); !math.IsNaN(v) {
+			out[strings.TrimPrefix(c.XMLName.Local, "clocks_event_reasons_counters_")] = v
 		}
 	}
 	return out
