@@ -13,19 +13,17 @@ source ../../scripts/guided-lib.sh
 # Build the CLI once so each step shows a short command.
 BIN_DIR=$(mktemp -d)
 trap 'rm -rf "$BIN_DIR"' EXIT
-(cd ../../agent && go build -o "$BIN_DIR" ./cmd/gpufit-claim ./cmd/gpufit-agent)
+(cd ../../agent && go build -o "$BIN_DIR" ./cmd/gpufit-claim)
 gpufit-claim() { "$BIN_DIR/gpufit-claim" "$@"; }
-gpufit-agent() { (cd ../../agent && "$BIN_DIR/gpufit-agent" "$@"); }
 
 kubectl get ns "$NS" >/dev/null 2>&1 || kubectl create ns "$NS" >/dev/null
 
-step 1 "Publish the normal scores from the agent's fake metrics:" \
+step 1 "The in-cluster agent publishes scores from the fake metrics (deploy/agent/fake-metrics.yaml):" \
        "  gpu-3: NVLink broken  -> training 0,  inference 100" \
        "  gpu-5: slower + hot   -> training 70 (weakest link: thermal), inference 85" \
        "  others: healthy       -> 100 everywhere"
-run "gpufit-agent -o table"
-run "gpufit-agent -o configmap | kubectl apply -f -"
-want=$(gpufit-agent -o configmap | jq -r '.data["scores.json"]' | jq -c 'map_values(.training)')
+run "kubectl logs -n dra-example-driver -l app=gpufit-agent | grep -E 'gpu-(3|5):' | tail -2"
+want='{"gpu-0":100,"gpu-1":100,"gpu-2":100,"gpu-3":0,"gpu-4":100,"gpu-5":70,"gpu-6":100,"gpu-7":100}'
 run wait_for_scores "'$want'"
 pause
 

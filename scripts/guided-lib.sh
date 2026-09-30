@@ -50,3 +50,30 @@ why_pending() {
   kubectl get events -n "$NS" --field-selector "involvedObject.name=$1,reason=FailedScheduling" \
     -o jsonpath='{.items[-1:].message}'
 }
+
+# ---- hand-set scores (ranking/tiers demos) ------------------------------------
+# The in-cluster agent rewrites its node's key in gpufit-scores every 5s, so
+# hand-written scores need the agent paused. pause_agent moves the agent pod
+# off the node (nodeSelector nobody matches); resume_agent brings it back, and
+# it re-publishes the real scores on its first tick.
+DRIVER_NS="${DRIVER_NS:-dra-example-driver}"
+
+gpu_node() { kubectl get resourceslices -o jsonpath='{.items[0].spec.nodeName}'; }
+
+pause_agent() {
+  kubectl patch ds gpufit-agent -n "$DRIVER_NS" --type merge \
+    -p '{"spec":{"template":{"spec":{"nodeSelector":{"gpufit.io/agent-paused":"true"}}}}}'
+  kubectl wait pod -n "$DRIVER_NS" -l app=gpufit-agent --for=delete --timeout=60s
+}
+
+resume_agent() {
+  kubectl patch ds gpufit-agent -n "$DRIVER_NS" --type json \
+    -p '[{"op":"remove","path":"/spec/template/spec/nodeSelector"}]'
+  kubectl rollout status ds/gpufit-agent -n "$DRIVER_NS" --timeout=90s
+}
+
+# set_scores '<scores.json content>': write it as this node's key.
+set_scores() {
+  kubectl patch cm gpufit-scores -n "$DRIVER_NS" --type merge \
+    -p "$(jq -n --arg k "$(gpu_node).json" --arg v "$1" '{data: {($k): $v}}')"
+}

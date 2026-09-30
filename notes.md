@@ -175,3 +175,8 @@ finetune/inference keep the weighted geometric mean. Floors unchanged.
 - Re-baselined demos: fitness-scheduling now 01-training-6 (gets the 6 qualifying GPUs) and 03-training-7
   (Pending). in-cluster-agent: 6-GPU training job now Pending after gpu-6 breaks and STARTS BY ITSELF
   when gpu-6 is repaired. Earlier notes above reflect the old scoring.
+- Gotcha found in a demo run: `scores.json` had come back (claim-generator demo still used the laptop CLI).
+  Once the node key exists, the driver IGNORES scores.json, so the ranking/tiers demos (hand-set scores via
+  scores.json) would silently use the agent's scores. Fix: demos no longer write scores.json; ranking/tiers
+  pause the agent (DaemonSet nodeSelector nobody matches), write the node key by hand, and resume the agent
+  at the end (guided-lib: pause_agent/resume_agent/set_scores). One writer per key.

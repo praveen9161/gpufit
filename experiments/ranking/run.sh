@@ -14,10 +14,11 @@ kubectl get ns "$NS" >/dev/null 2>&1 || kubectl create ns "$NS" >/dev/null
 
 step 1 "Give every GPU a PASSING training score, best scores on the highest numbers:" \
        "  gpu-0=80  gpu-1=83  gpu-2=86  gpu-3=89  gpu-4=92  gpu-5=95  gpu-6=98  gpu-7=100" \
-       "We write the scores ConfigMap by hand (not via the agent) so the numbers are exact." \
        "The driver checks it every 5s and republishes the ResourceSlice. Watch the TRAIN column."
 pause
-run kubectl apply -f 00-scores-ascending.json
+note "The agent would overwrite hand-written scores every 5s, so pause it for this experiment:"
+run pause_agent
+run "set_scores \"\$(jq -r '.data[\"scores.json\"]' 00-scores-ascending.json)\""
 want=$(jq -r '.data["scores.json"]' 00-scores-ascending.json | jq -c 'map_values(.training)')
 run wait_for_scores "'$want'"
 pause
@@ -52,10 +53,10 @@ run kubectl wait -n "$NS" --for=condition=Ready pod/training-2-strict --timeout=
 note "training-2-strict got: $(show_got training-2-strict)"
 pause
 
-step 5 "Clean up and put back the normal scores from the agent (gpu-3 degraded)."
+step 5 "Clean up and resume the agent; it re-publishes the real scores (gpu-3 degraded)."
 run kubectl delete -f 02-training-2-min95.yaml --wait
-run "(cd ../../agent && go run ./cmd/gpufit-agent -o configmap | kubectl apply -f -)"
-want=$(cd ../../agent && go run ./cmd/gpufit-agent -o configmap | jq -r '.data["scores.json"]' | jq -c 'map_values(.training)')
+run resume_agent
+want='{"gpu-0":100,"gpu-1":100,"gpu-2":100,"gpu-3":0,"gpu-4":100,"gpu-5":70,"gpu-6":100,"gpu-7":100}'
 run wait_for_scores "'$want'"
 
 printf '\n\033[1;36m━━ DONE ━━\033[0m\n'

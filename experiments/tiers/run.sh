@@ -16,7 +16,9 @@ step 1 "Same scores as the ranking test: every GPU passes, best on the highest n
        "  gpu-0=80  gpu-1=83  gpu-2=86  gpu-3=89  gpu-4=92  gpu-5=95  gpu-6=98  gpu-7=100" \
        "Last time, a plain '>= 80' claim got gpu-0 + gpu-1: the two WORST passing GPUs."
 pause
-run kubectl apply -f 00-scores-ascending.json
+note "The agent would overwrite hand-written scores every 5s, so pause it for this experiment:"
+run pause_agent
+run "set_scores \"\$(jq -r '.data[\"scores.json\"]' 00-scores-ascending.json)\""
 want=$(jq -r '.data["scores.json"]' 00-scores-ascending.json | jq -c 'map_values(.training)')
 run wait_for_scores "'$want'"
 pause
@@ -65,11 +67,11 @@ run kubectl wait -n "$NS" --for=condition=Ready pod/job-d --timeout=90s
 note "job-d got: $(show_got job-d)"
 pause
 
-step 8 "Clean up and put back the normal scores from the agent (gpu-3 degraded)."
+step 8 "Clean up and resume the agent; it re-publishes the real scores (gpu-3 degraded)."
 run kubectl delete -f 12-job-b.yaml -f 13-job-c.yaml -f 14-job-d.yaml --wait
 run kubectl delete -f 01-template-2gpus.yaml -f 02-template-4gpus.yaml
-run "(cd ../../agent && go run ./cmd/gpufit-agent -o configmap | kubectl apply -f -)"
-want=$(cd ../../agent && go run ./cmd/gpufit-agent -o configmap | jq -r '.data["scores.json"]' | jq -c 'map_values(.training)')
+run resume_agent
+want='{"gpu-0":100,"gpu-1":100,"gpu-2":100,"gpu-3":0,"gpu-4":100,"gpu-5":70,"gpu-6":100,"gpu-7":100}'
 run wait_for_scores "'$want'"
 
 printf '\n\033[1;36m━━ DONE ━━\033[0m\n'
