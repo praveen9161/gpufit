@@ -1,0 +1,107 @@
+# gpufit-controller: moves nodes between the training and inference pool and
+# marks GPUs for repair, from the scores the agents publish. One per cluster.
+# Design: docs/design/node-pools.md
+#
+#   kubectl apply -f deploy/controller/controller.yaml
+#   kubectl logs -n dra-example-driver deploy/gpufit-controller -f
+#
+# DEMO TIMERS: degrade after 10s, recover after 30s so changes are visible.
+# Production defaults are 5m / 30m (drop the two flags).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpufit-controller
+  namespace: dra-example-driver
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gpufit-controller
+  namespace: dra-example-driver
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-scores"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gpufit-controller
+  namespace: dra-example-driver
+subjects:
+- kind: ServiceAccount
+  name: gpufit-controller
+  namespace: dra-example-driver
+roleRef:
+  kind: Role
+  name: gpufit-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+# Cluster-scoped: nodes (label/annotate), device taint rules, node events.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gpufit-controller
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "patch"]
+- apiGroups: ["resource.k8s.io"]
+  resources: ["devicetaintrules"]
+  verbs: ["get", "list", "create", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gpufit-controller
+subjects:
+- kind: ServiceAccount
+  name: gpufit-controller
+  namespace: dra-example-driver
+roleRef:
+  kind: ClusterRole
+  name: gpufit-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpufit-controller
+  namespace: dra-example-driver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpufit-controller
+  template:
+    metadata:
+      labels:
+        app: gpufit-controller
+    spec:
+      serviceAccountName: gpufit-controller
+      containers:
+      - name: controller
+        image: gpufit-agent:dev
+        imagePullPolicy: Never   # loaded into kind by deploy/agent/build.sh
+        command: ["/gpufit-controller"]
+        args: ["--degrade-after=10s", "--recover-after=30s", "--interval=5s"]
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]

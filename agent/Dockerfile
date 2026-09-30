@@ -3,5 +3,7 @@
 FROM gcr.io/distroless/static-debian12:nonroot
 ARG TARGETARCH
 COPY bin/gpufit-agent-linux-${TARGETARCH} /gpufit-agent
+COPY bin/gpufit-controller-linux-${TARGETARCH} /gpufit-controller
+# Default: the agent. The controller Deployment sets command: [/gpufit-controller].
 ENTRYPOINT ["/gpufit-agent"]
 CMD ["run"]

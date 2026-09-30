@@ -82,7 +82,10 @@ func Write(w io.Writer, o Options) error {
 	return tmpl.Execute(w, struct {
 		Options
 		Tiers []int
-	}{o, tiers})
+		// Non-training work may use nodes the controller moved to the
+		// inference pool (docs/design/node-pools.md).
+		TolerateUnfitTraining bool
+	}{o, tiers, o.Workload != "training"})
 }
 
 func workloads() []string {
@@ -120,5 +123,11 @@ spec:
           selectors:
           - cel:
               expression: device.attributes["gpufit.io"].{{$.Workload}}Score >= {{.}}
+{{- if $.TolerateUnfitTraining}}
+          tolerations:
+          - key: gpufit.io/unfit-training
+            operator: Exists
+            effect: NoSchedule
+{{- end}}
 {{- end}}
 `))

@@ -81,3 +81,20 @@ func TestWriteRejectsBadInput(t *testing.T) {
 		}
 	}
 }
+
+// Only non-training claims may land on nodes in the inference pool.
+func TestTolerationsByWorkload(t *testing.T) {
+	for workload, want := range map[string]bool{"training": false, "finetune": true, "inference": true} {
+		var b strings.Builder
+		if err := Write(&b, Options{Namespace: "ns", Workload: workload, Count: 1, Min: 80, Prefer: DefaultPrefer, DeviceClass: "c"}); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.Count(b.String(), "key: gpufit.io/unfit-training")
+		if want && got != 3 { // one per firstAvailable option (95, 90, 80)
+			t.Errorf("%s: %d tolerations, want 3", workload, got)
+		}
+		if !want && got != 0 {
+			t.Errorf("%s: %d tolerations, want none", workload, got)
+		}
+	}
+}
