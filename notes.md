@@ -219,3 +219,17 @@ Demo (experiments/why/run.sh), both pods got the SAME scheduler message
 - train-unfit (2 GPUs): "0 of 2 usable; blocked by 7 tainted, 1 failing the selector" + "node is in the
   inference pool (gpu-5 training 70 < 80)", while 3 GPUs were actually free.
 Works with any DRA driver; only the gpufit.io notes need GPUFit. Candidate for upstream discussion.
+
+## 2026-09-30 — SESSION A: first real GPU (T4) — details in experiments/real-gpu/results/session-a-20260930-1055/README.md
+- AWS g4dn.xlarge, Tesla T4, driver 595.91.07. ~33 min, ~$0.25-0.30. Destroyed + verified nothing left.
+- Gotcha: first apply failed: AWS rejects "'" in security-group rule descriptions ("operator's IP").
+  The VM was created anyway (billing, unreachable); fixed the description, re-ran run.sh -> "1 to add".
+- `nvidia-smi -pl` and `-lgc` both ALLOWED on this VM. T4 power range is only 60-70 W.
+- Power limit: throughput ~ power_ratio^a, a = 1.11 (GEMM), 1.03 (CNN train); GPUFit default a=1.0 within
+  noise (baseline spread 1.7%). Predicted vs measured within ~3%.
+- Clock lock: GEMM unaffected (T4 already power-capped at 660 MHz under GEMM); CNN train 0.86 at 50% lock
+  while GPUFit said 1.00 -> blind spot confirmed. Same degradation, different impact per workload.
+- nvidia-smi on this driver: applications clocks "deprecated" (collector clock ratio has no data);
+  a lock only shows as the current clock (no flag/event); throttle-reason COUNTERS (cumulative us) exist
+  and should replace the instantaneous Active flags in the window.
+- Next measurement improvements: repeat runs, continuous clock/power sampling, wider-power-range GPU, 2+ GPUs.

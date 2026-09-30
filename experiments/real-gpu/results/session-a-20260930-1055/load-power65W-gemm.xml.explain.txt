@@ -1,0 +1,9 @@
+gpu-0  Tesla T4  GPU-8c6dc177-2397-26e5-7e6b-c47af2c15062
+  readings: power 65/70 W, temp 50 C (slowdown 93 C), active events: sw_power_cap
+  compute  0.93  power limit 65/70 W (93%); graphics clock n/a
+  memory   1.00  no uncorrectable ECC errors; memory clock n/a
+  nvlink   1.00  not collected in v1 (needs `nvidia-smi nvlink`; verify format on real GPU)
+  network  1.00  not measured (nvidia-smi can't see NICs)
+  thermal  1.00  50 C, slowdown at 93 C (43 C headroom, full score at >= 15 C)
+  scores:  training 93 (weakest link: compute 0.93), finetune 97 (weakest: compute 0.93), inference 97 (weakest: compute 0.93)
+

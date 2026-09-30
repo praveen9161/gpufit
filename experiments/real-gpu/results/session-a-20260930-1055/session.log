@@ -1,0 +1,107 @@
+[15:59:13] == 1. environment
+torch 2.12.1+cu130 cuda 13.0
+[15:59:15] power limit: default=70 min=60 max=70.00 W; max graphics clock=1590 MHz
+[15:59:15] == 2. permission tests
+Persistence mode is already Enabled for GPU 00000000:00:1E.0.
+All done.
+[15:59:15] persistence mode rc=0
+Power limit for GPU 00000000:00:1E.0 was set to 60.00 W from 70.00 W.
+All done.
+Power limit for GPU 00000000:00:1E.0 was set to 70.00 W from 60.00 W.
+All done.
+GPU clocks set to "(gpuClkMin 795, gpuClkMax 795)" for GPU 00000000:00:1E.0
+All done.
+All done.
+[15:59:15] power limit change allowed: 1   clock lock allowed: 1
+[15:59:15] == 3. baseline
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:00:12] baseline1 gemm: {"workload": "gemm", "value": 24.068, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 440, "seconds": 20.1, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:01:09] baseline2 gemm: {"workload": "gemm", "value": 23.757, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 440, "seconds": 20.36, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:02:05] baseline3 gemm: {"workload": "gemm", "value": 23.656, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 440, "seconds": 20.45, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:02:48] baseline1 train: {"workload": "train", "value": 62.662, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1260, "seconds": 20.11, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+[16:02:48] == 4. power sweep
+Power limit for GPU 00000000:00:1E.0 was set to 68.00 W from 70.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:03:44] power68W gemm: {"workload": "gemm", "value": 23.449, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 430, "seconds": 20.16, "torch": "2.12.1+cu130"}  | GPUFit compute=0.97 training=97
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:04:17] power68W train: {"workload": "train", "value": 62.023, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1250, "seconds": 20.15, "torch": "2.12.1+cu130"}  | GPUFit compute=0.97 training=97
+Power limit for GPU 00000000:00:1E.0 was set to 65.00 W from 68.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:05:15] power65W gemm: {"workload": "gemm", "value": 22.112, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 410, "seconds": 20.39, "torch": "2.12.1+cu130"}  | GPUFit compute=0.93 training=93
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:05:48] power65W train: {"workload": "train", "value": 60.224, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1210, "seconds": 20.09, "torch": "2.12.1+cu130"}  | GPUFit compute=0.93 training=93
+Power limit for GPU 00000000:00:1E.0 was set to 62.00 W from 65.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:06:48] power62W gemm: {"workload": "gemm", "value": 20.76, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 380, "seconds": 20.13, "torch": "2.12.1+cu130"}  | GPUFit compute=0.89 training=89
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:07:21] power62W train: {"workload": "train", "value": 55.828, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1120, "seconds": 20.06, "torch": "2.12.1+cu130"}  | GPUFit compute=0.89 training=89
+Power limit for GPU 00000000:00:1E.0 was set to 60.00 W from 62.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:08:22] power60W gemm: {"workload": "gemm", "value": 19.823, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 370, "seconds": 20.52, "torch": "2.12.1+cu130"}  | GPUFit compute=0.86 training=86
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:08:55] power60W train: {"workload": "train", "value": 51.902, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1040, "seconds": 20.04, "torch": "2.12.1+cu130"}  | GPUFit compute=0.86 training=86
+Power limit for GPU 00000000:00:1E.0 was set to 70.00 W from 60.00 W.
+All done.
+[16:08:55] == 5. clock sweep
+GPU clocks set to "(gpuClkMin 1431, gpuClkMax 1431)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:09:52] clock90pct gemm: {"workload": "gemm", "value": 23.694, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 440, "seconds": 20.42, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:10:25] clock90pct train: {"workload": "train", "value": 62.382, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1250, "seconds": 20.04, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+GPU clocks set to "(gpuClkMin 1272, gpuClkMax 1272)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:11:21] clock80pct gemm: {"workload": "gemm", "value": 23.601, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 430, "seconds": 20.03, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:11:54] clock80pct train: {"workload": "train", "value": 62.385, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1250, "seconds": 20.04, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+GPU clocks set to "(gpuClkMin 1113, gpuClkMax 1113)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:12:50] clock70pct gemm: {"workload": "gemm", "value": 23.58, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 430, "seconds": 20.05, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:13:23] clock70pct train: {"workload": "train", "value": 62.32, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1250, "seconds": 20.06, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+GPU clocks set to "(gpuClkMin 954, gpuClkMax 954)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:14:19] clock60pct gemm: {"workload": "gemm", "value": 23.571, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 430, "seconds": 20.06, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:14:53] clock60pct train: {"workload": "train", "value": 59.056, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1190, "seconds": 20.15, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+GPU clocks set to "(gpuClkMin 795, gpuClkMax 795)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:15:49] clock50pct gemm: {"workload": "gemm", "value": 23.596, "unit": "TFLOPS", "device": "Tesla T4", "dtype": "float16", "size": 8192, "iters": 430, "seconds": 20.04, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[16:16:22] clock50pct train: {"workload": "train", "value": 53.966, "unit": "steps/s", "device": "Tesla T4", "dtype": "float16", "size": 128, "iters": 1080, "seconds": 20.01, "torch": "2.12.1+cu130"}  | GPUFit compute=1.00 training=100
+All done.
+[16:16:22] == done. results in /home/ubuntu/gpufit-results
+[16:16:22] GPU reset (clocks unlocked, power limit 70)

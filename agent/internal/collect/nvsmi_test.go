@@ -178,3 +178,34 @@ func TestWindowedKeepsWorstUntilItExpires(t *testing.T) {
 		}
 	}
 }
+
+// Real captures: AWS g4dn.xlarge, Tesla T4, driver 595.91.07 (session A,
+// 2026-09-30). On this driver applications clocks are "deprecated", so the
+// clock ratio must come out n/a instead of breaking the parse.
+func TestRealT4Captures(t *testing.T) {
+	idle := readings(t, "real-t4-idle.xml")
+	if len(idle) != 1 || idle[0].Product != "Tesla T4" {
+		t.Fatalf("idle: %+v", idle)
+	}
+	r := idle[0]
+	if r.PowerLimitW != 70 || r.DefaultPowerLimitW != 70 || r.SlowdownTempC <= 0 {
+		t.Errorf("idle numbers: power %v/%v slowdown %v", r.PowerLimitW, r.DefaultPowerLimitW, r.SlowdownTempC)
+	}
+	if !math.IsNaN(r.GraphicsMHz) {
+		t.Errorf("applications clock = %v, want NaN (deprecated on this driver)", r.GraphicsMHz)
+	}
+	e := Ratios(r, DefaultParams)
+	if e.Health[fitness.Compute] != 1 || !strings.Contains(e.Why[fitness.Compute], "graphics clock n/a") {
+		t.Errorf("idle compute = %v (%s)", e.Health[fitness.Compute], e.Why[fitness.Compute])
+	}
+
+	capped := readings(t, "real-t4-power60w-gemm.xml")[0]
+	ec := Ratios(capped, DefaultParams)
+	// 60/70 W. Measured on this GPU: GEMM 0.83, train 0.83 of baseline.
+	if !near(ec.Health[fitness.Compute], 60.0/70) {
+		t.Errorf("60 W compute = %.3f (%s), want %.3f", ec.Health[fitness.Compute], ec.Why[fitness.Compute], 60.0/70)
+	}
+	if len(capped.ActiveEvents) == 0 || capped.ActiveEvents[0] != "sw_power_cap" {
+		t.Errorf("events under load = %v, want sw_power_cap", capped.ActiveEvents)
+	}
+}

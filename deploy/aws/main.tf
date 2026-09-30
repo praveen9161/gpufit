@@ -79,7 +79,7 @@ resource "aws_security_group" "gpu" {
 
 resource "aws_vpc_security_group_ingress_rule" "ssh" {
   security_group_id = aws_security_group.gpu.id
-  description       = "SSH from the operator's IP"
+  description       = "SSH from the operator IP only"
   cidr_ipv4         = var.ssh_cidr
   ip_protocol       = "tcp"
   from_port         = 22
