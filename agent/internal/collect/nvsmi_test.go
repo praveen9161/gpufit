@@ -215,3 +215,27 @@ func TestRealT4Captures(t *testing.T) {
 		t.Errorf("events under load = %v, want sw_power_cap", capped.ActiveEvents)
 	}
 }
+
+// The "unexplained clock deficit" rule on real T4 captures (session A). NOTE:
+// the rule was designed on this same data; it still needs validating on new data.
+func TestClockDeficitRealT4(t *testing.T) {
+	for _, tc := range []struct {
+		file     string
+		measured float64 // throughput vs baseline, measured in session A
+		flagged  bool
+	}{
+		{"real-t4-clock50pct-train.xml", 0.86, true},  // locked at 795 MHz, 60.6/70 W, no reason
+		{"real-t4-clock70pct-train.xml", 0.99, false}, // lock not binding: power-capped
+		{"real-t4-power60w-gemm.xml", 0.83, false},    // low clock explained by sw_power_cap
+		{"real-t4-idle.xml", 1.00, false},             // not busy
+	} {
+		e := Ratios(readings(t, tc.file)[0], DefaultParams)
+		flagged := strings.Contains(e.Why[fitness.Compute], "UNEXPLAINED")
+		if flagged != tc.flagged {
+			t.Errorf("%s: flagged=%t, want %t (%s)", tc.file, flagged, tc.flagged, e.Why[fitness.Compute])
+		}
+		if tc.flagged && math.Abs(e.Health[fitness.Compute]-tc.measured) > 0.05 {
+			t.Errorf("%s: compute %.2f, measured %.2f: estimate off by more than 0.05", tc.file, e.Health[fitness.Compute], tc.measured)
+		}
+	}
+}

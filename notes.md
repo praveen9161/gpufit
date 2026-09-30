@@ -233,3 +233,13 @@ Works with any DRA driver; only the gpufit.io notes need GPUFit. Candidate for u
   a lock only shows as the current clock (no flag/event); throttle-reason COUNTERS (cumulative us) exist
   and should replace the instantaneous Active flags in the window.
 - Next measurement improvements: repeat runs, continuous clock/power sampling, wider-power-range GPU, 2+ GPUs.
+
+## 2026-09-30 — Rule B: "unexplained clock deficit" (passive clock-lock detection)
+A healthy busy GPU is either at max clock or power-capped. If it's busy (util >= 90%), below 95% of max clock,
+below 95% of its power limit, and no throttle reason is active -> something (e.g. a clock lock) holds it back.
+Estimate compute = power draw / limit (unused power headroom; consistent with throughput ~ power, a~1).
+On all 22 session-A captures: flags exactly the 2 runs slowed by a clock lock (50%: est 0.87 vs measured 0.86;
+60%: est 0.89 vs 0.94), no false alarms (power-capped and idle captures explained/skipped).
+Max error vs measured: 0.14 -> 0.05. CAVEAT: rule designed on this same data (in-sample) -> validate in
+session A2 with continuous sampling, other GPUs (L4/A10G), repeated runs. Probe design now secondary:
+use it mainly as the gate back into the training pool (option D).

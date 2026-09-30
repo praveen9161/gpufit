@@ -40,7 +40,11 @@ type Reading struct {
 	// need more measurements first. nil if the driver doesn't report them.
 	ThrottleCountersUS map[string]float64
 
-	PowerDrawW float64 // instant power draw (informational)
+	PowerDrawW float64 // instant power draw
+
+	// Live clock and load, for the "unexplained clock deficit" rule.
+	ClockMHz, MaxClockMHz float64 // current vs max graphics clock
+	UtilPct               float64 // GPU utilization, %
 
 	UncorrectableECC  float64 // volatile (since driver load); NaN if ECC is off/unsupported
 	PendingRetirement bool    // retired pages waiting for a GPU reset
@@ -55,6 +59,12 @@ type Params struct {
 	HWSlowdownPenalty float64 // compute multiplier while a HW slowdown is active
 	ThermalEventCap   float64 // thermal is at most this while a thermal slowdown is active
 	PendingMemory     float64 // memory ratio while retirement/remap waits for a reset
+
+	// Unexplained clock deficit: busy GPU, below max clock, below its power
+	// limit, and no throttle reason active -> something (e.g. a clock lock)
+	// is holding it back. Compute is then estimated as power draw / limit.
+	DeficitMinUtilPct float64 // only judge samples at least this busy
+	DeficitMargin     float64 // "below" means below this fraction of max clock / power limit
 }
 
 var DefaultParams = Params{
@@ -63,6 +73,8 @@ var DefaultParams = Params{
 	HWSlowdownPenalty: 0.5,
 	ThermalEventCap:   0.5,
 	PendingMemory:     0.5,
+	DeficitMinUtilPct: 90,
+	DeficitMargin:     0.95,
 }
 
 // Explained is a Health plus one human-readable reason per component.
@@ -89,6 +101,10 @@ func Ratios(r Reading, p Params) Explained {
 	if ev := active(r, "hw_slowdown", "hw_power_brake_slowdown"); ev != "" {
 		compute *= p.HWSlowdownPenalty
 		why += fmt.Sprintf("; %s active -> x%.1f", ev, p.HWSlowdownPenalty)
+	}
+	if f, deficitWhy := clockDeficit(r, p); f < 1 {
+		compute *= f
+		why += "; " + deficitWhy
 	}
 	set(fitness.Compute, compute, "%s", why)
 
@@ -126,6 +142,30 @@ func Ratios(r Reading, p Params) Explained {
 		set(fitness.Thermal, th, "%s", why)
 	}
 	return e
+}
+
+// clockDeficit detects a busy GPU that runs below max clock AND below its power
+// limit with no throttle reason: nothing explains the low clock, so something
+// like a clock lock is holding it back. A healthy busy GPU is either at max
+// clock or power-capped (sw_power_cap). Estimate: draw/limit, i.e. the unused
+// power headroom (session A on a T4: estimates 0.87/0.89 vs measured 0.86/0.94
+// for 50%/60% clock locks; designed on that data, to be validated on new data).
+func clockDeficit(r Reading, p Params) (float64, string) {
+	for _, v := range []float64{r.UtilPct, r.ClockMHz, r.MaxClockMHz, r.PowerDrawW, r.PowerLimitW} {
+		if math.IsNaN(v) || v <= 0 {
+			return 1, ""
+		}
+	}
+	if r.UtilPct < p.DeficitMinUtilPct || r.ClockMHz >= p.DeficitMargin*r.MaxClockMHz ||
+		r.PowerDrawW >= p.DeficitMargin*r.PowerLimitW {
+		return 1, ""
+	}
+	if ev := active(r, "sw_power_cap", "hw_slowdown", "hw_power_brake_slowdown", "hw_thermal_slowdown", "sw_thermal_slowdown"); ev != "" {
+		return 1, "" // the low clock is explained
+	}
+	f := r.PowerDrawW / r.PowerLimitW
+	return f, fmt.Sprintf("UNEXPLAINED clock deficit: busy (%.0f%%) at %.0f/%.0f MHz, drawing %.0f/%.0f W, no throttle reason (e.g. clock lock) -> x%.2f",
+		r.UtilPct, r.ClockMHz, r.MaxClockMHz, r.PowerDrawW, r.PowerLimitW, f)
 }
 
 // ratio returns have/want (1 if either is unknown) and an explanation.
@@ -252,6 +292,9 @@ func ParseXML(data []byte) ([]Reading, error) {
 		r.ActiveEvents = activeEvents(g)
 		r.ThrottleCountersUS = throttleCounters(g)
 		r.PowerDrawW = g.num("gpu_power_readings/instant_power_draw", "power_readings/power_draw")
+		r.ClockMHz = g.num("clocks/graphics_clock")
+		r.MaxClockMHz = g.num("max_clocks/graphics_clock")
+		r.UtilPct = g.num("utilization/gpu_util")
 		out = append(out, r)
 	}
 	if len(out) == 0 {
