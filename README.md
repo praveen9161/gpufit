@@ -28,6 +28,8 @@ are next.
 |------|------|
 | `agent/` | Go: fitness scoring (`internal/fitness`), health collectors (`internal/collect`), `gpufit-agent` (per-node loop: collect -> score -> publish), `gpufit-claim` (writes tiered claim templates) |
 | `deploy/agent/` | Agent image build, DaemonSet + least-privilege RBAC, fake metrics ConfigMap |
+| `deploy/controller/` | `gpufit-controller`: moves nodes between training/inference pools, marks GPUs for repair (device taints, hysteresis) |
+| `agent/cmd/kubectl-gpufit` | `kubectl gpufit why <pod>`: explains why a DRA GPU claim is Pending (busy vs unfit vs tainted), with scores |
 | `driver-patch/` | Patches for dra-example-driver: publish each node's scores as `gpufit.io/<workload>Score` device attributes |
 | `experiments/` | Manifests for each experiment (Pending pods, device taints, fitness scheduling) |
 | `scripts/gpu-dash.sh` | Live terminal view of GPUs, scores, pods and claims |
@@ -67,6 +69,8 @@ Or walk through it step by step (keep `./scripts/gpu-dash.sh` open in a second t
 
 - `./experiments/claim-generator/run.sh`: training vs inference placement
 - `./experiments/in-cluster-agent/run.sh`: break a GPU's NVLink, watch scores and placement follow
+- `./experiments/node-pools/run.sh`: a straggler moves the node to the inference pool; repair brings it back
+- `./experiments/why/run.sh`: two Pending pods, same scheduler message, `kubectl gpufit why` tells busy from unfit
 
 Health comes from a pluggable collector. On kind it's `fake` (ConfigMap
 `gpufit-fake-metrics`, edit it to degrade a GPU); an `nvidia-smi` collector for

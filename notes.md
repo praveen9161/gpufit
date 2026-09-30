@@ -206,3 +206,16 @@ Design: docs/design/node-pools.md. Guided demo: experiments/node-pools/run.sh (~
 - With 1 GPU node, "training moves to another node" can't be shown; that needs several GPU nodes (shown later on real GPUs, sessions B and C).
 - Controller isn't left running between demos: with the default fake metrics (gpu-3/gpu-5 degraded) it would
   keep the only node in the inference pool and block the other demos' training jobs.
+
+## 2026-09-30 — `kubectl gpufit why`: explain Pending GPU pods
+agent/cmd/kubectl-gpufit + internal/why. Per claim option, every device is classified (in order):
+wrong class -> selector false (shows the attribute value, e.g. trainingScore 70) -> tainted, not tolerated
+(adds the node's pool reason for gpufit.io/unfit-training) -> in use (by which pod) -> available.
+Selectors are evaluated with k8s.io/dynamic-resource-allocation/cel (the scheduler's own CEL code).
+Out of scope: node-level constraints (node selectors, CPU/memory); the scheduler event still shows those.
+Demo (experiments/why/run.sh), both pods got the SAME scheduler message
+("0/2 nodes are available: 1 cannot allocate all claims, ..."):
+- train-busy (4 GPUs):  "closest is gpus/min95 with 3 of 4 usable; blocked by 5 busy" (lists who holds them)
+- train-unfit (2 GPUs): "0 of 2 usable; blocked by 7 tainted, 1 failing the selector" + "node is in the
+  inference pool (gpu-5 training 70 < 80)", while 3 GPUs were actually free.
+Works with any DRA driver; only the gpufit.io notes need GPUFit. Candidate for upstream discussion.
