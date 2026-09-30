@@ -20,6 +20,14 @@ WORK=$(mktemp -d)
 APPLIED=0 START=0
 SSH_OPTS=(-i ~/.ssh/gpufit -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$WORK/known_hosts" -o ConnectTimeout=10)
 
+# SSO logins expire (~1h). Refresh before steps that must not fail, above all destroy.
+ensure_login() {
+  if ! aws sts get-caller-identity >/dev/null 2>&1; then
+    note "AWS login expired; a browser will open to log in again."
+    aws sso login --profile gpufit
+  fi
+}
+
 cost() {
   local mins=$(( ( $(date +%s) - START ) / 60 ))
   echo "$mins min so far, about \$$(awk "BEGIN { printf \"%.2f\", $mins / 60 * $PRICE_PER_HOUR }") compute"
@@ -30,13 +38,15 @@ on_exit() {
   rm -rf "$WORK"
   if [[ $APPLIED == 1 ]]; then
     printf '\n\033[1;41m  A GPU VM MAY STILL BE RUNNING AND BILLING.  \033[0m\n'
-    echo "  Destroy it now:   cd $(cd "$TF" && pwd) && AWS_PROFILE=gpufit terraform destroy"
+    echo "  Destroy it now:   aws sso login --profile gpufit"
+    echo "                    cd $(cd "$TF" && pwd) && AWS_PROFILE=gpufit terraform destroy"
     echo "  (It also terminates itself after max_minutes, 180 by default.)"
   fi
 }
 trap on_exit EXIT
 
 step 1 "Preflight (free): login, quota, your current IP, agent binary for the VM."
+ensure_login
 run "aws sts get-caller-identity --query Account --output text"
 quota=$(aws service-quotas get-service-quota --service-code ec2 --quota-code L-DB2E81BA --region us-east-1 --query Quota.Value --output text)
 note "GPU quota (Running On-Demand G and VT instances): $quota vCPUs (need >= 4)"
@@ -75,6 +85,7 @@ run "ls $RESULTS | head -30"
 pause
 
 step 6 "DESTROY the VM. Billing ends when you type 'yes'."
+ensure_login
 ( cd "$TF" && terraform destroy )
 APPLIED=0
 note "Session length: $(cost)"
