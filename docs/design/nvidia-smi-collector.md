@@ -1,8 +1,9 @@
 # Design: nvidia-smi collector
 
-Status: **draft, not yet validated on real hardware.** Every threshold and
-formula below is a starting assumption. The point of the real-GPU session
-(weeks 5-6) is to measure them.
+Status: **decisions made (2026-09-30); not yet validated on real hardware.**
+Every threshold and formula below is a starting assumption. The point of the
+real-GPU session (weeks 5-6) is to measure them. Real-GPU driver question:
+option 1 (per-workload device taints) chosen for the real-GPU demo.
 
 ## Goal
 
