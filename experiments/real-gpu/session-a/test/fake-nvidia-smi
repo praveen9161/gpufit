@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Fake nvidia-smi for testing session.sh without a GPU. Pretends to be one
+# T4-like GPU (power limit 60-70 W, max graphics clock 1590 MHz).
+#   FAKE_STATE=dir     remembers the power limit / clock lock between calls
+#   FAKE_PL_OK=0|1     whether -pl is allowed (default 1)
+#   FAKE_LGC_OK=0|1    whether -lgc is allowed (default 1)
+set -eu
+state="${FAKE_STATE:?}"
+mkdir -p "$state"
+pl=$(cat "$state/pl" 2>/dev/null || echo 70)
+clk=$(cat "$state/clk" 2>/dev/null || echo "")
+
+case "${1:-}" in
+  -q)
+    if [[ "${2:-}" == -x ]]; then
+      cat <<EOF
+<?xml version="1.0" ?>
+<nvidia_smi_log>
+	<gpu id="00000000:00:1E.0">
+		<product_name>FAKE Tesla T4</product_name>
+		<uuid>GPU-fake-0000</uuid>
+		<clocks_event_reasons>
+			<clocks_event_reason_sw_power_cap>$([[ $pl -lt 70 ]] && echo Active || echo Not Active)</clocks_event_reason_sw_power_cap>
+			<clocks_event_reason_hw_slowdown>Not Active</clocks_event_reason_hw_slowdown>
+		</clocks_event_reasons>
+		<ecc_errors><volatile><dram_uncorrectable>0</dram_uncorrectable></volatile></ecc_errors>
+		<temperature>
+			<gpu_temp>45 C</gpu_temp>
+			<gpu_temp_slow_threshold>93 C</gpu_temp_slow_threshold>
+		</temperature>
+		<module_power_readings>
+			<default_power_limit>N/A</default_power_limit>
+			<min_power_limit>N/A</min_power_limit>
+		</module_power_readings>
+		<gpu_power_readings>
+			<current_power_limit>${pl}.00 W</current_power_limit>
+			<default_power_limit>70.00 W</default_power_limit>
+			<min_power_limit>60.00 W</min_power_limit>
+			<max_power_limit>70.00 W</max_power_limit>
+		</gpu_power_readings>
+		<clocks><graphics_clock>${clk:-1590} MHz</graphics_clock></clocks>
+		<applications_clocks><graphics_clock>1590 MHz</graphics_clock><mem_clock>5001 MHz</mem_clock></applications_clocks>
+		<default_applications_clocks><graphics_clock>1590 MHz</graphics_clock><mem_clock>5001 MHz</mem_clock></default_applications_clocks>
+		<max_clocks><graphics_clock>1590 MHz</graphics_clock><sm_clock>1590 MHz</sm_clock><mem_clock>5001 MHz</mem_clock></max_clocks>
+	</gpu>
+</nvidia_smi_log>
+EOF
+    else
+      echo "(fake) detailed query output"
+    fi ;;
+  -pl)
+    if [[ "${FAKE_PL_OK:-1}" == 1 ]]; then
+      echo "${2}" > "$state/pl"; echo "Power limit for GPU 00000000:00:1E.0 was set to ${2}.00 W from ${pl}.00 W."
+    else
+      echo "Changing power management limit is not supported for GPU: 00000000:00:1E.0."; exit 3
+    fi ;;
+  -lgc)
+    if [[ "${FAKE_LGC_OK:-1}" == 1 ]]; then
+      echo "${2%%,*}" > "$state/clk"; echo "GPU clocks set to \"(gpuClkMin ${2%%,*}, gpuClkMax ${2##*,})\" for GPU 00000000:00:1E.0"
+    else
+      echo "Setting locked GPU clocks is not supported for GPU 00000000:00:1E.0."; exit 3
+    fi ;;
+  -rgc) rm -f "$state/clk"; echo "All done." ;;
+  -pm) echo "Enabled persistence mode for GPU 00000000:00:1E.0." ;;
+  *) echo "(fake nvidia-smi) $*" ;;
+esac

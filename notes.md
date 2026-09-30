@@ -180,3 +180,16 @@ finetune/inference keep the weighted geometric mean. Floors unchanged.
   scores.json) would silently use the agent's scores. Fix: demos no longer write scores.json; ranking/tiers
   pause the agent (DaemonSet nodeSelector nobody matches), write the node key by hand, and resume the agent
   at the end (guided-lib: pause_agent/resume_agent/set_scores). One writer per key.
+
+## 2026-09-30 — AWS account + session A scripts (nothing applied yet)
+- A dedicated AWS account with MFA and budget alerts; the CLI logs in through IAM Identity Center (SSO).
+- GPU quota "Running On-Demand G and VT instances" (L-DB2E81BA): 0, request for 8 is a support case (CASE_OPENED).
+- `terraform plan` (deploy/aws): 10 resources, account lock works, Base DLAMI Ubuntu 24.04 found.
+  Session A overrides the AMI to "Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.12 (Ubuntu 24.04)".
+- Prices checked 2026-09-30 (us-east-1 on-demand): g4dn.xlarge $0.526/h (T4), g6.xlarge $0.805 (L4), g5.xlarge $1.006 (A10G).
+- experiments/real-gpu/session-a: bench.py (fp16 GEMM TFLOPS + small CNN train steps/s), session.sh (runs on the VM:
+  captures, -pl/-lgc permission test, power + clock sweeps, measured vs GPUFit-predicted), run.sh (Mac: apply ->
+  run -> download -> destroy -> verify). Dry-run on the Mac against test/fake-nvidia-smi: both "allowed" and
+  "refused" paths work; GPU always reset.
+- **Gap found in the dry run:** locking clocks with -lgc leaves GPUFit compute at 1.0, because the compute ratio
+  only reads *applications* clocks. The real XML capture should show where locked clocks appear; fix after.
