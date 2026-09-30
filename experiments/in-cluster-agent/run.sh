@@ -17,14 +17,7 @@ trap 'rm -rf "$BIN_DIR"' EXIT
 (cd ../../agent && go build -o "$BIN_DIR" ./cmd/gpufit-claim)
 gpufit-claim() { "$BIN_DIR/gpufit-claim" "$@"; }
 
-# Set one component of one GPU in the fake metrics, e.g. set_health gpu-6 nvlink 0.5
-set_health() {
-  local gpu=$1 comp=$2 val=$3 raw
-  raw=$(kubectl get cm -n "$DNS" gpufit-fake-metrics -o jsonpath='{.data.metrics\.json}' |
-        jq -c --arg g "$gpu" --arg c "$comp" --argjson v "$val" '.[$g][$c] = $v')
-  kubectl patch cm -n "$DNS" gpufit-fake-metrics --type merge \
-    -p "$(jq -n --arg m "$raw" '{data: {"metrics.json": $m}}')"
-}
+# set_health comes from scripts/guided-lib.sh.
 
 # Wait until one GPU's published training score equals $2.
 wait_for_training() {

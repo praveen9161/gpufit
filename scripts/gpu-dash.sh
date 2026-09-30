@@ -8,7 +8,8 @@
 # Every number here comes straight from the API server:
 #   GPUs      <- ResourceSlices        (what the driver advertises, incl. GPUFit scores)
 #   who owns  <- ResourceClaims        (.status.allocation + .status.reservedFor)
-#   taints    <- DeviceTaintRules
+#   taints    <- DeviceTaintRules (gpufit.io/ prefix and :NoSchedule hidden)
+#   pools     <- node label/annotation set by gpufit-controller
 #   why stuck <- FailedScheduling events
 set -euo pipefail
 NS="${NS:-gpufit-lab}"
@@ -23,6 +24,11 @@ snapshot() {
   events=$(kubectl get events -n "$NS" --field-selector reason=FailedScheduling -o json)
 
   echo "GPUFit dashboard — $(date '+%H:%M:%S')   namespace: $NS"
+  # Node pools, set by gpufit-controller (label gpufit.io/pool); "-" if it isn't running.
+  kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o json | jq -r '
+    .items[] | "Node \(.metadata.name): pool \(.metadata.labels["gpufit.io/pool"] // "-")"
+      + (if .metadata.annotations["gpufit.io/pool-reason"] then "  (\(.metadata.annotations["gpufit.io/pool-reason"]))" else "" end)'
+
   echo
 
   # ---- summary --------------------------------------------------------------
@@ -51,7 +57,10 @@ snapshot() {
              | select(($sp.deviceSelector.device // $d) == $d
                       and ($sp.deviceSelector.pool // $pool) == $pool
                       and ($sp.deviceSelector.driver // $drv) == $drv)
-             | "\($sp.taint.key)=\($sp.taint.value // ""):\($sp.taint.effect)" ] | join(" ")) as $taint
+             # short form: "gpufit.io/unfit-training" -> "unfit-training"; effect only if not NoSchedule
+             | ($sp.taint.key | ltrimstr("gpufit.io/"))
+               + (if $sp.taint.value then "=" + $sp.taint.value else "" end)
+               + (if $sp.taint.effect != "NoSchedule" then ":" + $sp.taint.effect else "" end) ] | join(",")) as $taint
         | [ $d,
             (if $alloc[$d] then "USED" else "free" end),
             ($alloc[$d].pod // "-"),

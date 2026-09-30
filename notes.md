@@ -193,3 +193,16 @@ finetune/inference keep the weighted geometric mean. Floors unchanged.
   "refused" paths work; GPU always reset.
 - **Gap found in the dry run:** locking clocks with -lgc leaves GPUFit compute at 1.0, because the compute ratio
   only reads *applications* clocks. The real XML capture should show where locked clocks appear; fix after.
+
+## 2026-09-30 — Node-level pools (gpufit-controller) on kind
+Design: docs/design/node-pools.md. Guided demo: experiments/node-pools/run.sh (~2 min, demo timers 10s/30s).
+- Node -> inference pool if any GPU's training score < 80 (DeviceTaintRule gpufit.io/unfit-training on the whole
+  pool = node); GPU -> needs-repair if inference < 50 (per-device rule). Node label/annotation + Events.
+- Test run (fake metrics): healthy node -> training pool; 4-GPU training job runs. gpu-5 thermal 0.7 ->
+  inference pool after ~17s (agent 5s + degrade-after 10s); running job NOT evicted; new 2-GPU training job
+  Pending; inference job Running on the same node (tolerates unfit-training). gpu-7 ECC -> only gpu-7 gets
+  needs-repair. Repair all -> back to training after ~34s (recover-after 30s), Pending training job started
+  by itself. Events: GPUFitPoolChanged / GPUFitNeedsRepair visible via kubectl get events.
+- With 1 GPU node, "training moves to another node" can't be shown; that needs several GPU nodes (shown later on real GPUs, sessions B and C).
+- Controller isn't left running between demos: with the default fake metrics (gpu-3/gpu-5 degraded) it would
+  keep the only node in the inference pool and block the other demos' training jobs.

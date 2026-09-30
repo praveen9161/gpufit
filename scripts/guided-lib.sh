@@ -77,3 +77,50 @@ set_scores() {
   kubectl patch cm gpufit-scores -n "$DRIVER_NS" --type merge \
     -p "$(jq -n --arg k "$(gpu_node).json" --arg v "$1" '{data: {($k): $v}}')"
 }
+
+# ---- fake GPU health (collector=fake) ----------------------------------------
+# set_health gpu-6 nvlink 0.5   -> change one component of one GPU
+set_health() {
+  local gpu=$1 comp=$2 val=$3 raw
+  raw=$(kubectl get cm -n "$DRIVER_NS" gpufit-fake-metrics -o jsonpath='{.data.metrics\.json}' |
+        jq -c --arg g "$gpu" --arg c "$comp" --argjson v "$val" '.[$g][$c] = $v')
+  kubectl patch cm -n "$DRIVER_NS" gpufit-fake-metrics --type merge \
+    -p "$(jq -n --arg m "$raw" '{data: {"metrics.json": $m}}')"
+}
+
+# set_all_healthy -> every component of every GPU = 1.0
+set_all_healthy() {
+  local raw
+  raw=$(kubectl get cm -n "$DRIVER_NS" gpufit-fake-metrics -o jsonpath='{.data.metrics\.json}' |
+        jq -c 'map_values(map_values(1))')
+  kubectl patch cm -n "$DRIVER_NS" gpufit-fake-metrics --type merge \
+    -p "$(jq -n --arg m "$raw" '{data: {"metrics.json": $m}}')"
+}
+
+# ---- node pools (gpufit-controller) -------------------------------------------
+node_pool() { kubectl get node "$(gpu_node)" -o jsonpath='{.metadata.labels.gpufit\.io/pool}'; }
+
+# wait_for_pool inference -> waits until the controller moved the node there
+wait_for_pool() {
+  local want=$1 got="" start=$SECONDS
+  while (( SECONDS - start < 120 )); do
+    got=$(node_pool)
+    if [[ "$got" == "$want" ]]; then echo "node is in the $got pool (after ~$((SECONDS - start))s)"; return; fi
+    sleep 2
+  done
+  echo "timed out: pool is '$got', wanted '$want'" >&2
+  exit 1
+}
+
+# gpu_pod <pod-name> <claim-template> -> a pod that just holds its GPUs
+gpu_pod() {
+  kubectl apply -f - <<YAML
+apiVersion: v1
+kind: Pod
+metadata: {namespace: $NS, name: $1}
+spec:
+  terminationGracePeriodSeconds: 0
+  containers: [{name: ctr, image: "ubuntu:24.04", command: [sleep, "9999"], resources: {claims: [{name: gpus}]}}]
+  resourceClaims: [{name: gpus, resourceClaimTemplateName: $2}]
+YAML
+}
