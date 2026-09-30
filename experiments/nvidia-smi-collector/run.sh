@@ -32,10 +32,10 @@ run gpufit-agent explain -xml "$XML/power-capped-old-names.xml"
 pause
 
 step 4 "Two broken GPUs: gpu-0 overheating (93 C, hardware throttling), gpu-1 with ECC memory errors." \
-       "Expect: gpu-1 scores 0 everywhere (corrupt memory). Look at gpu-0's training vs inference score:" \
-       "a throttling GPU slows a whole synchronous training job, so training should be LOWEST."
+       "Expect: gpu-1 scores 0 everywhere (corrupt memory). gpu-0 scores LOWEST for training:" \
+       "synchronous training waits for its slowest GPU, so training uses the weakest link."
 run gpufit-agent explain -xml "$XML/degraded-2gpu.xml"
-note "gpu-0: training 69 > inference 51. That's the design flaw (training averages away a straggler)."
+note "gpu-0: training 13 (weakest link: thermal) vs inference 51 (weighted: this GPU's share only)."
 pause
 
 step 5 "The compute formula has one unknown: how throughput falls with the power limit." \

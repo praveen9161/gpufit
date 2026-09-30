@@ -2,7 +2,7 @@ apiVersion: resource.k8s.io/v1
 kind: ResourceClaimTemplate
 metadata:
   namespace: gpufit-lab
-  name: training-8-gpus
+  name: training-6-gpus
 spec:
   spec:
     devices:
@@ -11,7 +11,7 @@ spec:
         exactly:
           deviceClassName: gpu.example.com
           allocationMode: ExactCount
-          count: 8
+          count: 6
           selectors:
           - cel:
               # Only GPUs whose GPUFit training score is at least 80.
@@ -21,7 +21,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   namespace: gpufit-lab
-  name: training-8
+  name: training-6
 spec:
   terminationGracePeriodSeconds: 0
   containers:
@@ -33,4 +33,4 @@ spec:
       - name: gpus
   resourceClaims:
   - name: gpus
-    resourceClaimTemplateName: training-8-gpus
+    resourceClaimTemplateName: training-6-gpus

@@ -6,10 +6,16 @@
 // 0.8 means "20% worse". Producing these ratios from real hardware
 // (nvidia-smi, DCGM, bandwidth tests) is the collector's job, not this package's.
 //
-// A workload score is a weighted geometric mean of the components, times 100.
-// Geometric (not arithmetic) so one bad component the workload depends on
-// drags the score down hard instead of being averaged away. A workload can
-// also set hard floors: if a component is below its floor, the score is 0.
+// A workload score is either
+//   - the weakest relevant component, times 100 (WeakestLink profiles), for
+//     synchronous distributed training: every step waits for the slowest GPU,
+//     so one straggling component slows the whole job; or
+//   - a weighted geometric mean of the components, times 100, for work that
+//     only loses this GPU's share. Geometric (not arithmetic) so one bad
+//     component the workload depends on still drags the score down hard.
+//
+// A workload can also set hard floors: if a component is below its floor, the
+// score is 0.
 package fitness
 
 import (
@@ -43,17 +49,21 @@ type Profile struct {
 	Weights map[Component]float64
 	// Floors are hard minimums. Below the floor the GPU is unfit (score 0).
 	Floors map[Component]float64
+	// WeakestLink scores by the worst relevant component instead of the
+	// weighted mean (weights then only select which components count).
+	WeakestLink bool
 }
 
 // DefaultProfiles are STARTING GUESSES, not measured values. They encode the
-// intuition that distributed training is gated by NVLink/network while
-// inference mostly needs compute and memory. Tune them from real measurements
-// (weeks 5-6).
+// intuitions that synchronous distributed training runs at the speed of its
+// slowest part (weakest link) and is gated by NVLink/network, while inference
+// mostly needs compute and memory. Tune them from real measurements (weeks 5-6).
 var DefaultProfiles = []Profile{
 	{
-		Name:    "training",
-		Weights: map[Component]float64{Compute: 0.25, Memory: 0.15, NVLink: 0.25, Network: 0.25, Thermal: 0.10},
-		Floors:  map[Component]float64{NVLink: 0.90, Network: 0.90},
+		Name:        "training",
+		Weights:     map[Component]float64{Compute: 0.25, Memory: 0.15, NVLink: 0.25, Network: 0.25, Thermal: 0.10},
+		Floors:      map[Component]float64{NVLink: 0.90, Network: 0.90},
+		WeakestLink: true,
 	},
 	{
 		Name:    "finetune",
@@ -95,6 +105,10 @@ func Score(h Health, p Profile) (Result, error) {
 		}
 	}
 
+	if p.WeakestLink {
+		return weakestLink(h, p)
+	}
+
 	// Weighted geometric mean: exp(sum(w_i * ln(x_i)) / sum(w_i)).
 	var sumW, sumLog float64
 	for _, c := range Components {
@@ -115,6 +129,24 @@ func Score(h Health, p Profile) (Result, error) {
 	score := int(math.Round(100 * math.Exp(sumLog/sumW)))
 
 	return Result{Workload: p.Name, Score: score, Reason: weakest(h, p)}, nil
+}
+
+// weakestLink scores by the lowest component the profile cares about.
+func weakestLink(h Health, p Profile) (Result, error) {
+	worst, found := Component(""), false
+	for _, c := range Components {
+		if p.Weights[c] > 0 && (!found || h[c] < h[worst]) {
+			worst, found = c, true
+		}
+	}
+	if !found {
+		return Result{}, fmt.Errorf("profile %q has no positive weights", p.Name)
+	}
+	reason := "healthy"
+	if h[worst] < 1 {
+		reason = fmt.Sprintf("weakest link: %s %.2f", worst, h[worst])
+	}
+	return Result{Workload: p.Name, Score: int(math.Round(100 * h[worst])), Reason: reason}, nil
 }
 
 // weakest names the relevant component that is costing the most score, or

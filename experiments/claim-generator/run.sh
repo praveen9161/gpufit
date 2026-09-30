@@ -21,7 +21,7 @@ kubectl get ns "$NS" >/dev/null 2>&1 || kubectl create ns "$NS" >/dev/null
 
 step 1 "Publish the normal scores from the agent's fake metrics:" \
        "  gpu-3: NVLink broken  -> training 0,  inference 100" \
-       "  gpu-5: slower + hot   -> training 91, inference 85" \
+       "  gpu-5: slower + hot   -> training 70 (weakest link: thermal), inference 85" \
        "  others: healthy       -> 100 everywhere"
 run "gpufit-agent -o table"
 run "gpufit-agent -o configmap | kubectl apply -f -"
@@ -36,7 +36,7 @@ run "gpufit-claim -workload training -min 80 -count 6 | kubectl apply -f -"
 pause
 
 step 3 "Start the training job. Training >= 95: gpu-0,1,2,4,6,7 (exactly 6)." \
-       "Expect min95 -> those six. gpu-3 (training 0) and gpu-5 (91) are left alone."
+       "Expect min95 -> those six. gpu-3 (training 0) and gpu-5 (70) are left alone."
 run kubectl apply -f 11-train-job.yaml
 run kubectl wait -n "$NS" --for=condition=Ready pod/train-job --timeout=90s
 note "train-job got: $(show_got train-job)"

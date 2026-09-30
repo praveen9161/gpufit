@@ -59,20 +59,21 @@ run wait_for_training gpu-6 0
 run "kubectl logs -n $DNS -l app=gpufit-agent --tail=1"
 pause
 
-step 4 "A training job asks for 6 GPUs, training >= 80. Healthy for training now:" \
-       "  gpu-0,1,2,4,7 (100) = 5 at >=95,  plus gpu-5 (91) at >=90." \
-       "min95 needs 6 but has 5 -> expect fallback to min90 -> gpu-0,1,2,4,5,7."
+step 4 "A training job asks for 6 GPUs, training >= 80. Healthy for training right now:" \
+       "  gpu-0,1,2,4,7 (100) = only 5. gpu-3 (0), gpu-6 (0, just broke), gpu-5 (70, straggler)." \
+       "No option can give 6 GPUs >= 80 -> expect Pending."
 run "gpufit-claim -workload training -min 80 -count 6 | kubectl apply -f -"
 run kubectl apply -f ../claim-generator/11-train-job.yaml
-run kubectl wait -n "$NS" --for=condition=Ready pod/train-job --timeout=90s
-note "train-job got: $(show_got train-job)"
+sleep 6
+run kubectl get pod -n "$NS" train-job
 pause
 
-step 5 "Repair gpu-6 (NVLink back to 1.0). Its training score should return to 100." \
-       "Scores only affect NEW allocations: the running job keeps its GPUs."
+step 5 "Repair gpu-6 (NVLink back to 1.0). Its training score returns to 100 -> 6 GPUs qualify." \
+       "Expect: the Pending job starts BY ITSELF via min95 on gpu-0,1,2,4,6,7. Nothing is re-submitted."
 run set_health gpu-6 nvlink 1.0
 run wait_for_training gpu-6 100
-note "train-job still has: $(show_got train-job)"
+run kubectl wait -n "$NS" --for=condition=Ready pod/train-job --timeout=90s
+note "train-job got: $(show_got train-job)"
 pause
 
 step 6 "Clean up (the fake metrics are back to the defaults already)."

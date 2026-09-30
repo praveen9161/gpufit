@@ -165,3 +165,13 @@ Design: docs/design/nvidia-smi-collector.md. Code: agent/internal/collect/{nvsmi
 - Cause: training profile only has floors on nvlink/network; compute/thermal get averaged away.
 - Proposal: training = weakest component (min), others keep weighted mean.
   Testable on real hardware: cap one GPU in a multi-GPU job, measure whole-job step time.
+
+## 2026-09-30 — Training score = weakest link (straggler fix)
+`Profile.WeakestLink` (training only): score = 100 x lowest relevant component;
+finetune/inference keep the weighted geometric mean. Floors unchanged.
+- Throttling sample GPU: training 69 -> 13; 70% power cap: training 91 -> 70; fake gpu-5: training 91 -> 70
+  (weakest link: thermal 0.70). Finetune/inference unchanged. Still a hypothesis until measured on a
+  multi-GPU job with one capped GPU.
+- Re-baselined demos: fitness-scheduling now 01-training-6 (gets the 6 qualifying GPUs) and 03-training-7
+  (Pending). in-cluster-agent: 6-GPU training job now Pending after gpu-6 breaks and STARTS BY ITSELF
+  when gpu-6 is repaired. Earlier notes above reflect the old scoring.

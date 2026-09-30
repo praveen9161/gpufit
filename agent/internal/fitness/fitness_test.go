@@ -86,3 +86,21 @@ func TestRejectsBadInput(t *testing.T) {
 		t.Error("want error for out-of-range component")
 	}
 }
+
+// Synchronous training runs at the speed of its slowest GPU, so a GPU that is
+// throttling must be scored WORST for training, not averaged away.
+func TestStragglerHurtsTrainingMost(t *testing.T) {
+	h := healthy()
+	h[Compute] = 0.5 // e.g. hardware slowdown
+
+	tr, _ := Score(h, profile(t, "training"))
+	if tr.Score != 50 || !strings.Contains(tr.Reason, "weakest link: compute") {
+		t.Errorf("training: got %d (%s), want 50 (weakest link: compute)", tr.Score, tr.Reason)
+	}
+	for _, name := range []string{"finetune", "inference"} {
+		r, _ := Score(h, profile(t, name))
+		if r.Score <= tr.Score {
+			t.Errorf("%s: got %d, want more than training's %d (only this GPU's share is lost)", name, r.Score, tr.Score)
+		}
+	}
+}
