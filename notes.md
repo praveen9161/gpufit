@@ -146,3 +146,22 @@ Run with the guided demo (`experiments/in-cluster-agent/run.sh`), fake metrics:
   `gpu-6: training 100 -> 0 (nvlink 0.50 < floor 0.90), finetune 100 -> 90 ...`
 - training x6 min80 then got gpu-0,1,2,4,5,7 via min90 (5 GPUs >= 95 wasn't enough).
 - gpu-6 repaired -> back to 100 after ~7s; the running job kept its GPUs (only new allocations change).
+
+## 2026-09-30 — nvidia-smi collector v1 (code + hand-written samples)
+Design: docs/design/nvidia-smi-collector.md. Code: agent/internal/collect/{nvsmi,window}.go.
+- Parses `nvidia-smi -q -x` as a generic XML tree so both element-name generations work
+  (gpu_power_readings/power_readings, clocks_event_reasons/clocks_throttle_reasons, dram_/sram_uncorrectable
+  vs double_bit/total). "N/A" -> unknown -> ratio 1 with reason "n/a".
+- `Windowed` wraps any collector: worst ratio per component over the window (10m default for nvidia-smi,
+  off for fake so demos react in seconds).
+- `gpufit-agent explain -xml f.xml`: readings -> ratios (with reasons) -> scores. First command on a real GPU.
+- Test XMLs in agent/testdata/nvidia-smi/ are HAND-WRITTEN from the documented layout. Replace with real captures.
+- nvlink/network: 1.0 in v1, logged as not collected/measured.
+
+**Design flaw found (from the hand-written samples, so logic only, not measured):**
+- Overheating GPU (93 C, hw_slowdown): training 69 > finetune 58 > inference 51. Backwards:
+  synchronous training runs at the speed of its slowest GPU (straggler), so a throttling GPU should be
+  worst for training. Power cap 70% -> training still 91.
+- Cause: training profile only has floors on nvlink/network; compute/thermal get averaged away.
+- Proposal: training = weakest component (min), others keep weighted mean.
+  Testable on real hardware: cap one GPU in a multi-GPU job, measure whole-job step time.

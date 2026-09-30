@@ -3,6 +3,7 @@
 // Usage:
 //
 //	gpufit-agent run [flags]                                     # in-cluster loop, see run.go
+//	gpufit-agent explain -xml gpu.xml                            # nvidia-smi readings -> ratios -> scores
 //	gpufit-agent -metrics testdata/metrics.json                  # print a table
 //	gpufit-agent -metrics testdata/metrics.json -o configmap | kubectl apply -f -
 //
@@ -22,8 +23,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "run" {
-		if err := runAgent(os.Args[2:]); err != nil {
+	if len(os.Args) > 1 && (os.Args[1] == "run" || os.Args[1] == "explain") {
+		sub := runAgent
+		if os.Args[1] == "explain" {
+			sub = explainXML
+		}
+		if err := sub(os.Args[2:]); err != nil {
 			fmt.Fprintln(os.Stderr, "gpufit-agent:", err)
 			os.Exit(1)
 		}

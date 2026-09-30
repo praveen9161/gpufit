@@ -35,8 +35,11 @@ func runAgent(args []string) error {
 	node := fs.String("node", os.Getenv("NODE_NAME"), "this node's name (env NODE_NAME)")
 	namespace := fs.String("namespace", envOr("POD_NAMESPACE", "dra-example-driver"), "namespace of the ConfigMaps (env POD_NAMESPACE)")
 	scoresName := fs.String("scores-configmap", "gpufit-scores", "ConfigMap the DRA driver reads scores from")
-	collector := fs.String("collector", "fake", "where health comes from: fake")
+	collector := fs.String("collector", "fake", "where health comes from: fake | nvidia-smi")
 	fakeName := fs.String("fake-configmap", "gpufit-fake-metrics", "ConfigMap with fake health ratios (collector=fake)")
+	nvidiaSMI := fs.String("nvidia-smi", "nvidia-smi", "nvidia-smi binary (collector=nvidia-smi)")
+	exponent := fs.Float64("power-exponent", collect.DefaultParams.PowerExponent, "compute ~ power_ratio^exponent (collector=nvidia-smi)")
+	window := fs.Duration("window", -1, "report the worst value over this long (default: 10m for nvidia-smi, off for fake)")
 	interval := fs.Duration("interval", 5*time.Second, "how often to collect and publish")
 	fs.Parse(args)
 
@@ -49,18 +52,31 @@ func runAgent(args []string) error {
 	}
 
 	var c collect.Collector
+	defaultWindow := time.Duration(0)
 	switch *collector {
 	case "fake":
 		c = collect.FakeConfigMap{Client: client, Namespace: *namespace, Name: *fakeName, Node: *node}
+	case "nvidia-smi":
+		p := collect.DefaultParams
+		p.PowerExponent = *exponent
+		c = collect.NvidiaSMI{Command: *nvidiaSMI, Params: p}
+		defaultWindow = 10 * time.Minute
+		log.Printf("note: nvidia-smi collector v1 does not measure nvlink or network; both are reported as 1.0")
 	default:
-		return fmt.Errorf("unknown -collector %q, want fake", *collector)
+		return fmt.Errorf("unknown -collector %q, want fake or nvidia-smi", *collector)
+	}
+	if *window < 0 {
+		*window = defaultWindow
+	}
+	if *window > 0 {
+		c = &collect.Windowed{Inner: c, Window: *window}
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	log.Printf("gpufit-agent on node %s: collector=%s, writing %s/%s key %s.json every %s",
-		*node, *collector, *namespace, *scoresName, *node, *interval)
+	log.Printf("gpufit-agent on node %s: collector=%s, window=%s, writing %s/%s key %s.json every %s",
+		*node, *collector, *window, *namespace, *scoresName, *node, *interval)
 
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()

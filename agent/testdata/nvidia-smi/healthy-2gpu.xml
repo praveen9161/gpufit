@@ -1,0 +1,93 @@
+<?xml version="1.0" ?>
+<!DOCTYPE nvidia_smi_log SYSTEM "nvsmi_device_v12.dtd">
+<!--
+  HAND-WRITTEN test data following the documented `nvidia-smi -q -x` layout
+  (newer drivers: gpu_power_readings, clocks_event_reasons). NOT captured from
+  real hardware. Replace/extend with real captures from the GPU session.
+  Two healthy GPUs; gpu-1 is under load (hot-ish, at its power cap).
+-->
+<nvidia_smi_log>
+	<driver_version>000.00.00</driver_version>
+	<attached_gpus>2</attached_gpus>
+	<gpu id="00000000:00:1E.0">
+		<product_name>EXAMPLE GPU</product_name>
+		<uuid>GPU-00000000-0000-0000-0000-000000000000</uuid>
+		<minor_number>0</minor_number>
+		<clocks_event_reasons>
+			<clocks_event_reason_gpu_idle>Active</clocks_event_reason_gpu_idle>
+			<clocks_event_reason_applications_clocks_setting>Not Active</clocks_event_reason_applications_clocks_setting>
+			<clocks_event_reason_sw_power_cap>Not Active</clocks_event_reason_sw_power_cap>
+			<clocks_event_reason_hw_slowdown>Not Active</clocks_event_reason_hw_slowdown>
+			<clocks_event_reason_hw_thermal_slowdown>Not Active</clocks_event_reason_hw_thermal_slowdown>
+			<clocks_event_reason_hw_power_brake_slowdown>Not Active</clocks_event_reason_hw_power_brake_slowdown>
+			<clocks_event_reason_sw_thermal_slowdown>Not Active</clocks_event_reason_sw_thermal_slowdown>
+		</clocks_event_reasons>
+		<ecc_errors>
+			<volatile>
+				<sram_correctable>0</sram_correctable>
+				<sram_uncorrectable>0</sram_uncorrectable>
+				<dram_correctable>0</dram_correctable>
+				<dram_uncorrectable>0</dram_uncorrectable>
+			</volatile>
+		</ecc_errors>
+		<retired_pages>
+			<pending_blacklist>No</pending_blacklist>
+		</retired_pages>
+		<remapped_rows>
+			<remapped_row_pending>No</remapped_row_pending>
+			<remapped_row_failure>No</remapped_row_failure>
+		</remapped_rows>
+		<temperature>
+			<gpu_temp>34 C</gpu_temp>
+			<gpu_temp_max_threshold>98 C</gpu_temp_max_threshold>
+			<gpu_temp_slow_threshold>95 C</gpu_temp_slow_threshold>
+		</temperature>
+		<gpu_power_readings>
+			<power_draw>60.00 W</power_draw>
+			<current_power_limit>300.00 W</current_power_limit>
+			<default_power_limit>300.00 W</default_power_limit>
+		</gpu_power_readings>
+		<applications_clocks>
+			<graphics_clock>1710 MHz</graphics_clock>
+			<mem_clock>6251 MHz</mem_clock>
+		</applications_clocks>
+		<default_applications_clocks>
+			<graphics_clock>1710 MHz</graphics_clock>
+			<mem_clock>6251 MHz</mem_clock>
+		</default_applications_clocks>
+	</gpu>
+	<gpu id="00000000:00:1F.0">
+		<product_name>EXAMPLE GPU</product_name>
+		<uuid>GPU-11111111-1111-1111-1111-111111111111</uuid>
+		<minor_number>1</minor_number>
+		<clocks_event_reasons>
+			<clocks_event_reason_gpu_idle>Not Active</clocks_event_reason_gpu_idle>
+			<clocks_event_reason_sw_power_cap>Active</clocks_event_reason_sw_power_cap>
+			<clocks_event_reason_hw_slowdown>Not Active</clocks_event_reason_hw_slowdown>
+			<clocks_event_reason_hw_thermal_slowdown>Not Active</clocks_event_reason_hw_thermal_slowdown>
+			<clocks_event_reason_sw_thermal_slowdown>Not Active</clocks_event_reason_sw_thermal_slowdown>
+		</clocks_event_reasons>
+		<ecc_errors>
+			<volatile>
+				<dram_uncorrectable>0</dram_uncorrectable>
+			</volatile>
+		</ecc_errors>
+		<temperature>
+			<gpu_temp>78 C</gpu_temp>
+			<gpu_temp_slow_threshold>95 C</gpu_temp_slow_threshold>
+		</temperature>
+		<gpu_power_readings>
+			<power_draw>298.50 W</power_draw>
+			<current_power_limit>300.00 W</current_power_limit>
+			<default_power_limit>300.00 W</default_power_limit>
+		</gpu_power_readings>
+		<applications_clocks>
+			<graphics_clock>1710 MHz</graphics_clock>
+			<mem_clock>6251 MHz</mem_clock>
+		</applications_clocks>
+		<default_applications_clocks>
+			<graphics_clock>1710 MHz</graphics_clock>
+			<mem_clock>6251 MHz</mem_clock>
+		</default_applications_clocks>
+	</gpu>
+</nvidia_smi_log>

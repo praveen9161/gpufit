@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<!DOCTYPE nvidia_smi_log SYSTEM "nvsmi_device_v11.dtd">
+<!--
+  HAND-WRITTEN test data using the OLDER element names (power_readings,
+  clocks_throttle_reasons, retired_pages/pending_retirement,
+  ecc double_bit/total). NOT captured from real hardware.
+  One GPU with its power limit lowered to 70% (like `nvidia-smi -pl 210`),
+  ECC not supported ("N/A").
+-->
+<nvidia_smi_log>
+	<attached_gpus>1</attached_gpus>
+	<gpu id="00000000:00:04.0">
+		<product_name>EXAMPLE GPU OLD DRIVER</product_name>
+		<uuid>GPU-22222222-2222-2222-2222-222222222222</uuid>
+		<clocks_throttle_reasons>
+			<clocks_throttle_reason_gpu_idle>Not Active</clocks_throttle_reason_gpu_idle>
+			<clocks_throttle_reason_sw_power_cap>Active</clocks_throttle_reason_sw_power_cap>
+			<clocks_throttle_reason_hw_slowdown>Not Active</clocks_throttle_reason_hw_slowdown>
+		</clocks_throttle_reasons>
+		<ecc_errors>
+			<volatile>
+				<single_bit><total>N/A</total></single_bit>
+				<double_bit><total>N/A</total></double_bit>
+			</volatile>
+		</ecc_errors>
+		<retired_pages>
+			<pending_retirement>No</pending_retirement>
+		</retired_pages>
+		<temperature>
+			<gpu_temp>65 C</gpu_temp>
+			<gpu_temp_slow_threshold>90 C</gpu_temp_slow_threshold>
+		</temperature>
+		<power_readings>
+			<power_draw>209.10 W</power_draw>
+			<power_limit>210.00 W</power_limit>
+			<default_power_limit>300.00 W</default_power_limit>
+			<enforced_power_limit>210.00 W</enforced_power_limit>
+		</power_readings>
+		<applications_clocks>
+			<graphics_clock>N/A</graphics_clock>
+			<mem_clock>N/A</mem_clock>
+		</applications_clocks>
+		<default_applications_clocks>
+			<graphics_clock>N/A</graphics_clock>
+			<mem_clock>N/A</mem_clock>
+		</default_applications_clocks>
+	</gpu>
+</nvidia_smi_log>

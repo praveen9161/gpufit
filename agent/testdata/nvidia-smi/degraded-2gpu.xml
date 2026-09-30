@@ -1,0 +1,72 @@
+<?xml version="1.0" ?>
+<!DOCTYPE nvidia_smi_log SYSTEM "nvsmi_device_v12.dtd">
+<!--
+  HAND-WRITTEN test data, NOT captured from real hardware.
+  gpu-0: thermal trouble: 93 C (2 C below slowdown), hw_thermal_slowdown and
+         hw_slowdown active (e.g. failed fan / bad airflow).
+  gpu-1: memory trouble: 3 uncorrectable ECC errors since driver load and a
+         row remap pending.
+-->
+<nvidia_smi_log>
+	<attached_gpus>2</attached_gpus>
+	<gpu id="00000000:00:1E.0">
+		<product_name>EXAMPLE GPU</product_name>
+		<uuid>GPU-33333333-3333-3333-3333-333333333333</uuid>
+		<clocks_event_reasons>
+			<clocks_event_reason_sw_power_cap>Not Active</clocks_event_reason_sw_power_cap>
+			<clocks_event_reason_hw_slowdown>Active</clocks_event_reason_hw_slowdown>
+			<clocks_event_reason_hw_thermal_slowdown>Active</clocks_event_reason_hw_thermal_slowdown>
+			<clocks_event_reason_sw_thermal_slowdown>Not Active</clocks_event_reason_sw_thermal_slowdown>
+		</clocks_event_reasons>
+		<ecc_errors>
+			<volatile>
+				<dram_uncorrectable>0</dram_uncorrectable>
+			</volatile>
+		</ecc_errors>
+		<remapped_rows>
+			<remapped_row_pending>No</remapped_row_pending>
+			<remapped_row_failure>No</remapped_row_failure>
+		</remapped_rows>
+		<temperature>
+			<gpu_temp>93 C</gpu_temp>
+			<gpu_temp_slow_threshold>95 C</gpu_temp_slow_threshold>
+		</temperature>
+		<gpu_power_readings>
+			<current_power_limit>300.00 W</current_power_limit>
+			<default_power_limit>300.00 W</default_power_limit>
+		</gpu_power_readings>
+		<applications_clocks>
+			<graphics_clock>1710 MHz</graphics_clock>
+			<mem_clock>6251 MHz</mem_clock>
+		</applications_clocks>
+		<default_applications_clocks>
+			<graphics_clock>1710 MHz</graphics_clock>
+			<mem_clock>6251 MHz</mem_clock>
+		</default_applications_clocks>
+	</gpu>
+	<gpu id="00000000:00:1F.0">
+		<product_name>EXAMPLE GPU</product_name>
+		<uuid>GPU-44444444-4444-4444-4444-444444444444</uuid>
+		<clocks_event_reasons>
+			<clocks_event_reason_hw_slowdown>Not Active</clocks_event_reason_hw_slowdown>
+		</clocks_event_reasons>
+		<ecc_errors>
+			<volatile>
+				<sram_uncorrectable>0</sram_uncorrectable>
+				<dram_uncorrectable>3</dram_uncorrectable>
+			</volatile>
+		</ecc_errors>
+		<remapped_rows>
+			<remapped_row_pending>Yes</remapped_row_pending>
+			<remapped_row_failure>No</remapped_row_failure>
+		</remapped_rows>
+		<temperature>
+			<gpu_temp>50 C</gpu_temp>
+			<gpu_temp_slow_threshold>95 C</gpu_temp_slow_threshold>
+		</temperature>
+		<gpu_power_readings>
+			<current_power_limit>300.00 W</current_power_limit>
+			<default_power_limit>300.00 W</default_power_limit>
+		</gpu_power_readings>
+	</gpu>
+</nvidia_smi_log>
