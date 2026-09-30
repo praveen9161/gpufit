@@ -10,13 +10,13 @@ cd "$(dirname "$0")/.."
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 (cd ../../../agent && go build -o "$work/gpufit-agent" ./cmd/gpufit-agent)
-cp session.sh bench.py "$work/"
+cp session.sh ../common/bench.py "$work/"
 
 for allowed in 1 0; do
   echo "######## permissions allowed=$allowed"
   rm -rf "$work/state" "$work/out"
   FAKE_STATE="$work/state" FAKE_PL_OK=$allowed FAKE_LGC_OK=$allowed \
-  NVSMI="$PWD/test/fake-nvidia-smi" SUDO="" PYTHON="$PYTHON" AGENT="$work/gpufit-agent" QUICK=1 \
+  NVSMI="$PWD/../common/test/fake-nvidia-smi" SUDO="" PYTHON="$PYTHON" AGENT="$work/gpufit-agent" QUICK=1 \
     "$work/session.sh" "$work/out" > "$work/stdout.txt" 2>&1 || { cat "$work/stdout.txt"; exit 1; }
   grep -E '== |allowed|SKIPPED|FAILED|FATAL|GPU reset' "$work/out/session.log"
   cat "$work/out/summary.md"

@@ -243,3 +243,12 @@ On all 22 session-A captures: flags exactly the 2 runs slowed by a clock lock (5
 Max error vs measured: 0.14 -> 0.05. CAVEAT: rule designed on this same data (in-sample) -> validate in
 session A2 with continuous sampling, other GPUs (L4/A10G), repeated runs. Probe design now secondary:
 use it mainly as the gate back into the training pool (option D).
+
+## 2026-09-30 — Session A2 prepared (L4), not run yet
+- experiments/real-gpu/run.sh <session> is now generic (session.env: instance type, price, AMI); session-a/run.sh wraps it.
+- session-a2: 3 reps/setting; 200 ms --query-gpu sampling incl. throttle flags + counters (field names verified from the
+  T4's --help-query-gpu); XML snapshot every 5 s judged by the real Go collector (validates rule B on new data);
+  probe prototype = bench.py probe (gemm + CNN + copy).
+- Dry-run bug found: `explain | grep -q UNEXPLAINED` under `set -o pipefail` reports a MATCH as failure (grep exits
+  early -> SIGPIPE upstream). Flags went 2/5 instead of 5/5. Fixed by capturing output once.
+- terraform plan for g6.xlarge: us-east-1a, PyTorch 2.12 AMI, 10 to add (read-only, nothing created).

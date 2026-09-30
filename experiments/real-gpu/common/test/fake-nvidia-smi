@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# Fake nvidia-smi for testing session.sh without a GPU. Pretends to be one
-# T4-like GPU (power limit 60-70 W, max graphics clock 1590 MHz).
+# Fake nvidia-smi for testing session scripts without a GPU. Pretends to be one
+# T4-like GPU (power limit 60-70 W, max graphics clock 1590 MHz) that is always
+# busy and, like the real T4 in session A, power-capped around 1100 MHz: a clock
+# lock below that shows up as a lower clock, power below the limit and NO
+# throttle reason (what the "unexplained clock deficit" rule looks for).
 #   FAKE_STATE=dir     remembers the power limit / clock lock between calls
 #   FAKE_PL_OK=0|1     whether -pl is allowed (default 1)
 #   FAKE_LGC_OK=0|1    whether -lgc is allowed (default 1)
@@ -9,6 +12,13 @@ state="${FAKE_STATE:?}"
 mkdir -p "$state"
 pl=$(cat "$state/pl" 2>/dev/null || echo 70)
 clk=$(cat "$state/clk" 2>/dev/null || echo "")
+
+# Live state: lock binding (below the ~1100 MHz the power cap allows) or not.
+if [[ -n "$clk" && "$clk" -lt 1100 ]]; then
+  cur=$clk; draw=$(( pl * clk / 1100 )); pcap="Not Active"
+else
+  cur=1100; draw=$pl; pcap=Active
+fi
 
 case "${1:-}" in
   -q)
@@ -20,7 +30,7 @@ case "${1:-}" in
 		<product_name>FAKE Tesla T4</product_name>
 		<uuid>GPU-fake-0000</uuid>
 		<clocks_event_reasons>
-			<clocks_event_reason_sw_power_cap>$([[ $pl -lt 70 ]] && echo Active || echo Not Active)</clocks_event_reason_sw_power_cap>
+			<clocks_event_reason_sw_power_cap>${pcap}</clocks_event_reason_sw_power_cap>
 			<clocks_event_reason_hw_slowdown>Not Active</clocks_event_reason_hw_slowdown>
 		</clocks_event_reasons>
 		<ecc_errors><volatile><dram_uncorrectable>0</dram_uncorrectable></volatile></ecc_errors>
@@ -32,13 +42,15 @@ case "${1:-}" in
 			<default_power_limit>N/A</default_power_limit>
 			<min_power_limit>N/A</min_power_limit>
 		</module_power_readings>
+		<utilization><gpu_util>99 %</gpu_util></utilization>
 		<gpu_power_readings>
+			<instant_power_draw>${draw}.00 W</instant_power_draw>
 			<current_power_limit>${pl}.00 W</current_power_limit>
 			<default_power_limit>70.00 W</default_power_limit>
 			<min_power_limit>60.00 W</min_power_limit>
 			<max_power_limit>70.00 W</max_power_limit>
 		</gpu_power_readings>
-		<clocks><graphics_clock>${clk:-1590} MHz</graphics_clock></clocks>
+		<clocks><graphics_clock>${cur} MHz</graphics_clock></clocks>
 		<applications_clocks><graphics_clock>1590 MHz</graphics_clock><mem_clock>5001 MHz</mem_clock></applications_clocks>
 		<default_applications_clocks><graphics_clock>1590 MHz</graphics_clock><mem_clock>5001 MHz</mem_clock></default_applications_clocks>
 		<max_clocks><graphics_clock>1590 MHz</graphics_clock><sm_clock>1590 MHz</sm_clock><mem_clock>5001 MHz</mem_clock></max_clocks>
@@ -62,5 +74,31 @@ EOF
     fi ;;
   -rgc) rm -f "$state/clk"; echo "All done." ;;
   -pm) echo "Enabled persistence mode for GPU 00000000:00:1E.0." ;;
+  --query-gpu=*)
+    # One CSV line per call, or one every N ms with -lms N (until killed).
+    fields=${1#--query-gpu=}; ms=""
+    [[ "${3:-}" == -lms ]] && ms=$4
+    line() {
+      local out=() f
+      IFS=, read -ra fs <<< "$fields"
+      for f in "${fs[@]}"; do
+        case $f in
+          timestamp) out+=("$(date '+%Y/%m/%d %H:%M:%S.000')") ;;
+          clocks.gr|clocks.current.graphics) out+=("$cur") ;;
+          clocks.max.gr|clocks.max.graphics) out+=(1590) ;;
+          power.draw.instant|power.draw) out+=("$draw.00") ;;
+          enforced.power.limit|power.limit) out+=("$pl.00") ;;
+          utilization.gpu) out+=(99) ;;
+          temperature.gpu) out+=(45) ;;
+          clocks_event_reasons.sw_power_cap) out+=("$pcap") ;;
+          clocks_event_reasons.*) out+=("Not Active") ;;
+          clocks_event_reasons_counters.*) out+=(0) ;;
+          *) out+=("[N/A]") ;;
+        esac
+      done
+      (IFS=,; echo "${out[*]}" | sed 's/,/, /g')
+    }
+    if [[ -z "$ms" ]]; then line; exit; fi
+    while true; do line; sleep "$(awk "BEGIN { print $ms / 1000 }")"; done ;;
   *) echo "(fake nvidia-smi) $*" ;;
 esac

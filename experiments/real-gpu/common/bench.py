@@ -3,6 +3,11 @@
 
   gemm   half-precision matrix multiply -> TFLOPS (raw compute, tensor cores)
   train  small CNN training loop on synthetic data -> steps/s (realistic mix)
+  copy   device-to-device memory copy -> GB/s (memory bandwidth)
+  probe  short run of all three (GPUFit active-probe prototype, see
+         docs/design/active-probe.md). Session A on a T4: gemm is POWER-bound
+         (ignored a 50% clock lock), the CNN is CLOCK-sensitive (-14% at a 50%
+         lock), so a probe needs both parts.
 
 Each run warms up first (clocks and temperature settle), then measures for a
 fixed time. Same inputs every run, so results are comparable across power and
@@ -70,9 +75,24 @@ def train(dev, dtype, size, warmup, seconds):
     return iters / elapsed, "steps/s", iters, elapsed
 
 
+def copy(dev, dtype, size, warmup, seconds):
+    """size = MiB per buffer. Counts read + write bytes."""
+    n = size * 1024 * 1024 // 4
+    a = torch.empty(n, device=dev, dtype=torch.float32)
+    b = torch.empty_like(a)
+    iters, elapsed = timed(dev, lambda: b.copy_(a), warmup, seconds)
+    return 2 * a.numel() * 4 * iters / elapsed / 1e9, "GB/s", iters, elapsed
+
+
+WORKLOADS = {"gemm": gemm, "train": train, "copy": copy}
+DEFAULT_SIZE = {  # (cuda, cpu)
+    "gemm": (8192, 512), "train": (128, 8), "copy": (512, 16),
+}
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("workload", choices=["gemm", "train"])
+    p.add_argument("workload", choices=[*WORKLOADS, "probe"])
     p.add_argument("--seconds", type=float, default=20)
     p.add_argument("--warmup", type=float, default=10)
     p.add_argument("--size", type=int, help="matrix size (gemm) or batch size (train)")
@@ -82,10 +102,21 @@ def main():
     dev = torch.device("cuda" if a.device == "auto" and torch.cuda.is_available() else
                        "cpu" if a.device == "auto" else a.device)
     dtype = torch.float16 if dev.type == "cuda" else torch.float32
-    size = a.size or {"gemm": 8192 if dev.type == "cuda" else 512,
-                      "train": 128 if dev.type == "cuda" else 8}[a.workload]
+    def size_for(w):
+        return a.size or DEFAULT_SIZE[w][0 if dev.type == "cuda" else 1]
 
-    value, unit, iters, elapsed = {"gemm": gemm, "train": train}[a.workload](dev, dtype, size, a.warmup, a.seconds)
+    if a.workload == "probe":
+        # Each part: short warm-up, short measurement. --seconds is per part.
+        parts = {}
+        for w in ("gemm", "train", "copy"):
+            value, unit, _, _ = WORKLOADS[w](dev, dtype, size_for(w), a.warmup, a.seconds)
+            parts[w] = {"value": round(value, 3), "unit": unit}
+        print(json.dumps({"workload": "probe", "parts": parts, "torch": torch.__version__,
+                          "device": torch.cuda.get_device_name(0) if dev.type == "cuda" else dev.type}))
+        return
+
+    size = size_for(a.workload)
+    value, unit, iters, elapsed = WORKLOADS[a.workload](dev, dtype, size, a.warmup, a.seconds)
     print(json.dumps({
         "workload": a.workload, "value": round(value, 3), "unit": unit,
         "device": torch.cuda.get_device_name(0) if dev.type == "cuda" else dev.type,
