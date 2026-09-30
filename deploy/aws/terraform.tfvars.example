@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars (git-ignored) and fill in.
+# Your public IP:  curl -s https://checkip.amazonaws.com
+ssh_cidr = "203.0.113.7/32"
+
+# Optional overrides:
+# instance_type = "g6.xlarge"
+# max_minutes   = 120

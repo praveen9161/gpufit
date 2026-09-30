@@ -6,3 +6,10 @@
 
 .DS_Store
 /agent/bin/
+
+# Terraform: provider cache, state (may contain sensitive data), your tfvars (your IP)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+/deploy/aws/terraform.tfvars

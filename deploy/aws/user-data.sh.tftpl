@@ -1,0 +1,9 @@
+#!/bin/bash
+# Runs once at first boot (cloud-init).
+set -eu
+
+# Safety net: power off after ${max_minutes} minutes. Because the instance's
+# shutdown behavior is "terminate", this ends billing for the VM and its disk.
+# Extend deliberately with:  sudo shutdown -c && sudo shutdown -h +60
+shutdown -h +${max_minutes} "gpufit: max session time (${max_minutes} min) reached, terminating"
+date -u -d "+${max_minutes} minutes" +%Y-%m-%dT%H:%M:%SZ > /etc/gpufit-terminates-at
