@@ -1,7 +1,11 @@
 variable "account_id" {
-  description = "The only AWS account this configuration may touch."
+  description = "The only AWS account this configuration may touch. Set it in account.auto.tfvars (git-ignored), e.g. account_id = \"123456789012\"."
   type        = string
-  default     = "<GPUFit AWS account>"
+
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.account_id))
+    error_message = "account_id must be a 12-digit AWS account ID."
+  }
 }
 
 variable "aws_profile" {

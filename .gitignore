@@ -13,3 +13,5 @@
 *.tfstate.*
 .terraform.tfstate.lock.info
 /deploy/aws/terraform.tfvars
+
+/deploy/aws/*.auto.tfvars
