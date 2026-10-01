@@ -16,6 +16,12 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "availability_zone" {
+  description = "Zone for the GPU VM. Empty = first zone that offers instance_type. Set it when AWS reports InsufficientInstanceCapacity in a zone."
+  type        = string
+  default     = ""
+}
+
 variable "instance_type" {
   description = "Single-GPU instance. g4dn.xlarge = 1x T4 (cheapest); g6.xlarge = 1x L4; g5.xlarge = 1x A10G. All 4 vCPUs."
   type        = string

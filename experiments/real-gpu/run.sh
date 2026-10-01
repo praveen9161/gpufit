@@ -4,6 +4,7 @@
 #   the GPU -> download results -> terraform destroy (billing ends) -> verify
 #
 #   ./experiments/real-gpu/run.sh session-a2      # any folder with session.env + session.sh
+#   AVAILABILITY_ZONE=us-east-1b ./experiments/real-gpu/run.sh session-a2   # if a zone has no capacity
 set -euo pipefail
 cd "$(dirname "$0")"
 source ../../scripts/guided-lib.sh
@@ -16,6 +17,8 @@ source "$SESSION/session.env"   # INSTANCE_TYPE, PRICE_PER_HOUR, AMI_NAME_PATTER
 TF=../../deploy/aws
 export AWS_PROFILE=gpufit
 export TF_VAR_instance_type="$INSTANCE_TYPE" TF_VAR_ami_name_pattern="$AMI_NAME_PATTERN"
+# Optional: AVAILABILITY_ZONE=us-east-1b ./run.sh ...  when AWS has no capacity in the default zone.
+export TF_VAR_availability_zone="${AVAILABILITY_ZONE:-}"
 
 STAMP=$(date +%Y%m%d-%H%M)
 RESULTS="$HERE/results/$SESSION-$STAMP"

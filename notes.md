@@ -252,3 +252,14 @@ use it mainly as the gate back into the training pool (option D).
 - Dry-run bug found: `explain | grep -q UNEXPLAINED` under `set -o pipefail` reports a MATCH as failure (grep exits
   early -> SIGPIPE upstream). Flags went 2/5 instead of 5/5. Fixed by capturing output once.
 - terraform plan for g6.xlarge: us-east-1a, PyTorch 2.12 AMI, 10 to add (read-only, nothing created).
+
+## 2026-10-01 — SESSION A2 (A10G) + refocus on cost
+Details: experiments/real-gpu/results/session-a2-20261001-0929/README.md. ~$1.12. Total real-GPU spend so far ~$1.45.
+- L4 (g6.xlarge) had no capacity in us-east-1a/1b (InsufficientInstanceCapacity; the provider retried silently
+  for 20+ min). Added: availability_zone variable, 4m create timeout, INSTANCE_TYPE override. Ran on A10G (1c).
+- Same degradation, very different cost per workload: 150 W -> heavy GEMM 0.68, CNN 0.94.
+- v1 power model and rule B's size estimate are T4-specific (too pessimistic on the A10G); rule B DETECTION held
+  (all lock snapshots flagged, no false alarms). Probe matches per-workload impact.
+- Decision: passive signals = trigger, probe = per-workload score. STOP measurement deep-dives.
+- Refocus: the goal is cost. Next = session B on 2 GPUs: real Kubernetes + NVIDIA DRA driver + GPUFit,
+  same training job with vs without GPUFit -> measured job time, GPU-hours, $. Then a cost calculator.

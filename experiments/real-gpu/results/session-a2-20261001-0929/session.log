@@ -1,0 +1,252 @@
+[14:32:33] == 1. environment
+torch 2.12.1+cu130 cuda 13.0
+[14:32:35] power limit: default=300 min=100 W; max graphics clock=1710 MHz; reps=3
+[14:32:35] == 2. permission tests
+Persistence mode is already Enabled for GPU 00000000:00:1E.0.
+All done.
+Power limit for GPU 00000000:00:1E.0 was set to 100.00 W from 300.00 W.
+All done.
+Power limit for GPU 00000000:00:1E.0 was set to 300.00 W from 100.00 W.
+All done.
+GPU clocks set to "(gpuClkMin 855, gpuClkMax 855)" for GPU 00000000:00:1E.0
+All done.
+All done.
+[14:32:35] power limit change allowed: 1   clock lock allowed: 1
+[14:32:35] == 3. baseline
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:33:26] baseline-gemm-r1: {"workload": "gemm", "value": 63.563, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1160, "seconds": 20.07, "torch": "2.  | GPUFit compute(median)=1.0 deficit 0 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:34:44] baseline-train-r1: {"workload": "train", "value": 112.879, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2260, "seconds": 20.02, "torch": "  | GPUFit compute(median)=1.0 deficit 0 / 15
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:35:24] baseline-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 63.573, "unit": "TFLOPS"}, "train": {"value": 112.806, "unit": "steps/s"}, "copy": {"value": 481.025, "unit":   | GPUFit compute(median)=1.0 deficit 0 / 7
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:36:14] baseline-gemm-r2: {"workload": "gemm", "value": 63.486, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1160, "seconds": 20.09, "torch": "2.  | GPUFit compute(median)=1.0 deficit 0 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:36:47] baseline-train-r2: {"workload": "train", "value": 112.81, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2260, "seconds": 20.03, "torch": "2  | GPUFit compute(median)=1.0 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:37:27] baseline-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 63.538, "unit": "TFLOPS"}, "train": {"value": 112.985, "unit": "steps/s"}, "copy": {"value": 481.009, "unit":   | GPUFit compute(median)=1.0 deficit 0 / 7
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:38:17] baseline-gemm-r3: {"workload": "gemm", "value": 63.557, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1160, "seconds": 20.07, "torch": "2.  | GPUFit compute(median)=1.0 deficit 0 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:38:50] baseline-train-r3: {"workload": "train", "value": 112.853, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2260, "seconds": 20.03, "torch": "  | GPUFit compute(median)=1.0 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:39:30] baseline-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 63.57, "unit": "TFLOPS"}, "train": {"value": 112.809, "unit": "steps/s"}, "copy": {"value": 481.024, "unit": "  | GPUFit compute(median)=1.0 deficit 0 / 7
+[14:39:30] == 4. power sweep
+Power limit for GPU 00000000:00:1E.0 was set to 250.00 W from 300.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:40:21] power250W-gemm-r1: {"workload": "gemm", "value": 59.535, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1090, "seconds": 20.13, "torch": "2.  | GPUFit compute(median)=0.83 deficit 0 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:40:54] power250W-train-r1: {"workload": "train", "value": 112.822, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2260, "seconds": 20.03, "torch": "  | GPUFit compute(median)=0.83 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:41:36] power250W-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 59.532, "unit": "TFLOPS"}, "train": {"value": 112.774, "unit": "steps/s"}, "copy": {"value": 480.965, "unit":   | GPUFit compute(median)=0.83 deficit 0 / 8
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:42:27] power250W-gemm-r2: {"workload": "gemm", "value": 59.528, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1090, "seconds": 20.13, "torch": "2.  | GPUFit compute(median)=0.83 deficit 0 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:43:00] power250W-train-r2: {"workload": "train", "value": 112.789, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2260, "seconds": 20.04, "torch": "  | GPUFit compute(median)=0.83 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:43:42] power250W-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 59.522, "unit": "TFLOPS"}, "train": {"value": 112.889, "unit": "steps/s"}, "copy": {"value": 481.071, "unit":   | GPUFit compute(median)=0.83 deficit 0 / 8
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:44:33] power250W-gemm-r3: {"workload": "gemm", "value": 59.656, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1090, "seconds": 20.09, "torch": "2.  | GPUFit compute(median)=0.83 deficit 0 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:45:06] power250W-train-r3: {"workload": "train", "value": 112.823, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2260, "seconds": 20.03, "torch": "  | GPUFit compute(median)=0.83 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:45:47] power250W-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 59.525, "unit": "TFLOPS"}, "train": {"value": 112.842, "unit": "steps/s"}, "copy": {"value": 481.041, "unit":   | GPUFit compute(median)=0.83 deficit 0 / 8
+Power limit for GPU 00000000:00:1E.0 was set to 200.00 W from 250.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:46:40] power200W-gemm-r1: {"workload": "gemm", "value": 53.609, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 980, "seconds": 20.1, "torch": "2.12  | GPUFit compute(median)=0.67 deficit 0 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:47:14] power200W-train-r1: {"workload": "train", "value": 111.598, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2240, "seconds": 20.07, "torch": "  | GPUFit compute(median)=0.67 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:47:57] power200W-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 53.611, "unit": "TFLOPS"}, "train": {"value": 111.492, "unit": "steps/s"}, "copy": {"value": 480.982, "unit":   | GPUFit compute(median)=0.67 deficit 0 / 8
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:48:51] power200W-gemm-r2: {"workload": "gemm", "value": 53.594, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 980, "seconds": 20.11, "torch": "2.1  | GPUFit compute(median)=0.67 deficit 0 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:49:24] power200W-train-r2: {"workload": "train", "value": 111.627, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2240, "seconds": 20.07, "torch": "  | GPUFit compute(median)=0.67 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:50:07] power200W-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 53.633, "unit": "TFLOPS"}, "train": {"value": 111.686, "unit": "steps/s"}, "copy": {"value": 481.018, "unit":   | GPUFit compute(median)=0.67 deficit 0 / 8
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:51:01] power200W-gemm-r3: {"workload": "gemm", "value": 53.617, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 980, "seconds": 20.1, "torch": "2.12  | GPUFit compute(median)=0.67 deficit 0 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:51:34] power200W-train-r3: {"workload": "train", "value": 111.575, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2240, "seconds": 20.08, "torch": "  | GPUFit compute(median)=0.67 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:52:17] power200W-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 53.682, "unit": "TFLOPS"}, "train": {"value": 111.639, "unit": "steps/s"}, "copy": {"value": 481.005, "unit":   | GPUFit compute(median)=0.67 deficit 0 / 8
+Power limit for GPU 00000000:00:1E.0 was set to 150.00 W from 200.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:53:16] power150W-gemm-r1: {"workload": "gemm", "value": 43.013, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 790, "seconds": 20.19, "torch": "2.1  | GPUFit compute(median)=0.5 deficit 0 / 11
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:53:49] power150W-train-r1: {"workload": "train", "value": 105.69, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2120, "seconds": 20.06, "torch": "2  | GPUFit compute(median)=0.5 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:54:38] power150W-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 43.126, "unit": "TFLOPS"}, "train": {"value": 105.776, "unit": "steps/s"}, "copy": {"value": 481.004, "unit":   | GPUFit compute(median)=0.5 deficit 0 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:55:36] power150W-gemm-r2: {"workload": "gemm", "value": 43.103, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 790, "seconds": 20.15, "torch": "2.1  | GPUFit compute(median)=0.5 deficit 0 / 11
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:56:09] power150W-train-r2: {"workload": "train", "value": 105.718, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2120, "seconds": 20.05, "torch": "  | GPUFit compute(median)=0.5 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:56:58] power150W-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 43.092, "unit": "TFLOPS"}, "train": {"value": 105.731, "unit": "steps/s"}, "copy": {"value": 480.955, "unit":   | GPUFit compute(median)=0.5 deficit 0 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:57:56] power150W-gemm-r3: {"workload": "gemm", "value": 43.123, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 790, "seconds": 20.14, "torch": "2.1  | GPUFit compute(median)=0.5 deficit 0 / 11
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:58:29] power150W-train-r3: {"workload": "train", "value": 105.691, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2120, "seconds": 20.06, "torch": "  | GPUFit compute(median)=0.5 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[14:59:18] power150W-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 43.372, "unit": "TFLOPS"}, "train": {"value": 105.814, "unit": "steps/s"}, "copy": {"value": 480.992, "unit":   | GPUFit compute(median)=0.5 deficit 0 / 9
+Power limit for GPU 00000000:00:1E.0 was set to 100.00 W from 150.00 W.
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:00:41] power100W-gemm-r1: {"workload": "gemm", "value": 22.079, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 410, "seconds": 20.42, "torch": "2.1  | GPUFit compute(median)=0.33 deficit 0 / 16
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:01:15] power100W-train-r1: {"workload": "train", "value": 80.642, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1620, "seconds": 20.09, "torch": "2  | GPUFit compute(median)=0.33 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:02:28] power100W-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 21.989, "unit": "TFLOPS"}, "train": {"value": 80.333, "unit": "steps/s"}, "copy": {"value": 480.988, "unit": "  | GPUFit compute(median)=0.33 deficit 0 / 14
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:03:52] power100W-gemm-r2: {"workload": "gemm", "value": 21.998, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 410, "seconds": 20.49, "torch": "2.1  | GPUFit compute(median)=0.33 deficit 0 / 16
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:04:25] power100W-train-r2: {"workload": "train", "value": 80.666, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1620, "seconds": 20.08, "torch": "2  | GPUFit compute(median)=0.33 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:05:39] power100W-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 21.922, "unit": "TFLOPS"}, "train": {"value": 80.499, "unit": "steps/s"}, "copy": {"value": 480.953, "unit": "  | GPUFit compute(median)=0.33 deficit 0 / 14
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:07:02] power100W-gemm-r3: {"workload": "gemm", "value": 21.989, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 400, "seconds": 20.0, "torch": "2.12  | GPUFit compute(median)=0.33 deficit 0 / 16
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:07:35] power100W-train-r3: {"workload": "train", "value": 80.477, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1610, "seconds": 20.01, "torch": "2  | GPUFit compute(median)=0.33 deficit 0 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:08:49] power100W-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 22.012, "unit": "TFLOPS"}, "train": {"value": 80.377, "unit": "steps/s"}, "copy": {"value": 480.909, "unit": "  | GPUFit compute(median)=0.33 deficit 0 / 14
+Power limit for GPU 00000000:00:1E.0 was set to 300.00 W from 100.00 W.
+All done.
+[15:08:49] == 5. clock sweep
+GPU clocks set to "(gpuClkMin 1539, gpuClkMax 1539)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:09:40] clock90pct-gemm-r1: {"workload": "gemm", "value": 61.916, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1130, "seconds": 20.07, "torch": "2.  | GPUFit compute(median)=0.88 deficit 9 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:10:13] clock90pct-train-r1: {"workload": "train", "value": 110.251, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2210, "seconds": 20.05, "torch": "  | GPUFit compute(median)=0.55 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:10:54] clock90pct-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 61.933, "unit": "TFLOPS"}, "train": {"value": 110.27, "unit": "steps/s"}, "copy": {"value": 480.942, "unit": "  | GPUFit compute(median)=0.88 deficit 7 / 7
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:11:44] clock90pct-gemm-r2: {"workload": "gemm", "value": 61.926, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1130, "seconds": 20.06, "torch": "2.  | GPUFit compute(median)=0.89 deficit 9 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:12:17] clock90pct-train-r2: {"workload": "train", "value": 110.235, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2210, "seconds": 20.05, "torch": "  | GPUFit compute(median)=0.55 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:12:58] clock90pct-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 61.92, "unit": "TFLOPS"}, "train": {"value": 110.299, "unit": "steps/s"}, "copy": {"value": 481.075, "unit": "  | GPUFit compute(median)=0.89 deficit 7 / 7
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:13:48] clock90pct-gemm-r3: {"workload": "gemm", "value": 61.927, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 1130, "seconds": 20.06, "torch": "2.  | GPUFit compute(median)=0.9 deficit 9 / 9
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:14:21] clock90pct-train-r3: {"workload": "train", "value": 110.253, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 2210, "seconds": 20.04, "torch": "  | GPUFit compute(median)=0.555 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:15:02] clock90pct-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 61.93, "unit": "TFLOPS"}, "train": {"value": 110.283, "unit": "steps/s"}, "copy": {"value": 481.042, "unit": "  | GPUFit compute(median)=0.89 deficit 7 / 7
+GPU clocks set to "(gpuClkMin 1197, gpuClkMax 1197)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:15:57] clock70pct-gemm-r1: {"workload": "gemm", "value": 48.196, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 880, "seconds": 20.08, "torch": "2.1  | GPUFit compute(median)=0.56 deficit 10 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:16:31] clock70pct-train-r1: {"workload": "train", "value": 98.582, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1980, "seconds": 20.08, "torch": "2  | GPUFit compute(median)=0.4 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:17:17] clock70pct-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 48.196, "unit": "TFLOPS"}, "train": {"value": 98.609, "unit": "steps/s"}, "copy": {"value": 480.925, "unit": "  | GPUFit compute(median)=0.56 deficit 8 / 8
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:18:12] clock70pct-gemm-r2: {"workload": "gemm", "value": 48.197, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 880, "seconds": 20.08, "torch": "2.1  | GPUFit compute(median)=0.57 deficit 10 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:18:45] clock70pct-train-r2: {"workload": "train", "value": 98.539, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1980, "seconds": 20.09, "torch": "2  | GPUFit compute(median)=0.41 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:19:31] clock70pct-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 48.195, "unit": "TFLOPS"}, "train": {"value": 98.515, "unit": "steps/s"}, "copy": {"value": 480.987, "unit": "  | GPUFit compute(median)=0.565 deficit 8 / 8
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:20:27] clock70pct-gemm-r3: {"workload": "gemm", "value": 48.196, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 880, "seconds": 20.08, "torch": "2.1  | GPUFit compute(median)=0.57 deficit 10 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:21:00] clock70pct-train-r3: {"workload": "train", "value": 98.523, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1980, "seconds": 20.1, "torch": "2.  | GPUFit compute(median)=0.405 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:21:46] clock70pct-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 48.194, "unit": "TFLOPS"}, "train": {"value": 98.519, "unit": "steps/s"}, "copy": {"value": 480.916, "unit": "  | GPUFit compute(median)=0.56 deficit 8 / 8
+GPU clocks set to "(gpuClkMin 855, gpuClkMax 855)" for GPU 00000000:00:1E.0
+All done.
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:22:51] clock50pct-gemm-r1: {"workload": "gemm", "value": 34.347, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 630, "seconds": 20.17, "torch": "2.1  | GPUFit compute(median)=0.42 deficit 12 / 12
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:23:24] clock50pct-train-r1: {"workload": "train", "value": 83.406, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1670, "seconds": 20.02, "torch": "2  | GPUFit compute(median)=0.34 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:24:20] clock50pct-probe-r1: {"workload": "probe", "parts": {"gemm": {"value": 34.348, "unit": "TFLOPS"}, "train": {"value": 83.45, "unit": "steps/s"}, "copy": {"value": 480.799, "unit": "G  | GPUFit compute(median)=0.415 deficit 9 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:25:25] clock50pct-gemm-r2: {"workload": "gemm", "value": 34.347, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 630, "seconds": 20.17, "torch": "2.1  | GPUFit compute(median)=0.42 deficit 12 / 12
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:25:58] clock50pct-train-r2: {"workload": "train", "value": 83.373, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1670, "seconds": 20.03, "torch": "2  | GPUFit compute(median)=0.34 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:26:53] clock50pct-probe-r2: {"workload": "probe", "parts": {"gemm": {"value": 34.347, "unit": "TFLOPS"}, "train": {"value": 83.49, "unit": "steps/s"}, "copy": {"value": 480.843, "unit": "G  | GPUFit compute(median)=0.42 deficit 9 / 10
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:27:58] clock50pct-gemm-r3: {"workload": "gemm", "value": 34.347, "unit": "TFLOPS", "device": "NVIDIA A10G", "dtype": "float16", "size": 8192, "iters": 630, "seconds": 20.17, "torch": "2.1  | GPUFit compute(median)=0.42 deficit 12 / 12
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:28:32] clock50pct-train-r3: {"workload": "train", "value": 83.481, "unit": "steps/s", "device": "NVIDIA A10G", "dtype": "float16", "size": 128, "iters": 1670, "seconds": 20.0, "torch": "2.  | GPUFit compute(median)=0.34 deficit 6 / 6
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[15:29:27] clock50pct-probe-r3: {"workload": "probe", "parts": {"gemm": {"value": 34.347, "unit": "TFLOPS"}, "train": {"value": 83.495, "unit": "steps/s"}, "copy": {"value": 480.81, "unit": "G  | GPUFit compute(median)=0.42 deficit 9 / 10
+All done.
+[15:29:27] == done. results in /home/ubuntu/gpufit-results
+[15:29:27] GPU reset (clocks unlocked, power limit 300)

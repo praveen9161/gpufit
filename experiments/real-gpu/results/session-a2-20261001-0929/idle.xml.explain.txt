@@ -1,0 +1,10 @@
+gpu-0  NVIDIA A10G  GPU-96d5d3f9-50e9-9b9b-bbb8-31a972a43eba
+  readings: power 300/300 W (drawing 60 W), temp 34 C (slowdown 95 C), active events: gpu_idle
+  throttle time since driver load (not scored yet): hw_power_brake 0.0s, hw_therm_slowdown 0.0s, sw_power_cap 0.0s, sw_therm_slowdown 0.0s, sync_boost 0.0s
+  compute  1.00  power limit 300/300 W (100%); graphics clock n/a
+  memory   1.00  no uncorrectable ECC errors; memory clock n/a
+  nvlink   1.00  not collected in v1 (needs `nvidia-smi nvlink`; verify format on real GPU)
+  network  1.00  not measured (nvidia-smi can't see NICs)
+  thermal  1.00  34 C, slowdown at 95 C (61 C headroom, full score at >= 15 C)
+  scores:  training 100, finetune 100, inference 100
+

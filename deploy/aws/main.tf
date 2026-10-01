@@ -29,7 +29,15 @@ data "aws_ec2_instance_type_offerings" "gpu" {
 }
 
 locals {
-  az = sort(data.aws_ec2_instance_type_offerings.gpu.locations)[0]
+  az = var.availability_zone != "" ? var.availability_zone : sort(data.aws_ec2_instance_type_offerings.gpu.locations)[0]
+}
+
+# Fail at plan time (free) instead of at launch if the chosen zone doesn't offer the type.
+check "zone_offers_instance_type" {
+  assert {
+    condition     = contains(data.aws_ec2_instance_type_offerings.gpu.locations, local.az)
+    error_message = "${var.instance_type} is not offered in ${local.az}."
+  }
 }
 
 # ---- network: VPC with one public subnet ----------------------------------------
@@ -128,4 +136,11 @@ resource "aws_instance" "gpu" {
   }
 
   tags = { Name = "gpufit-gpu" }
+
+  # When a zone is out of GPU capacity, AWS returns InsufficientInstanceCapacity
+  # and the provider keeps retrying silently. Give up after a few minutes so the
+  # operator can pick another zone or GPU type.
+  timeouts {
+    create = "4m"
+  }
 }
