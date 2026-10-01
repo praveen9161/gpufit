@@ -16,7 +16,9 @@ SESSION=${SESSION%/}
 source "$SESSION/session.env"   # INSTANCE_TYPE, PRICE_PER_HOUR, AMI_NAME_PATTERN, EXPECTED_MINUTES
 TF=../../deploy/aws
 export AWS_PROFILE=gpufit
-export TF_VAR_instance_type="$INSTANCE_TYPE" TF_VAR_ami_name_pattern="$AMI_NAME_PATTERN"
+INSTANCE_COUNT=${INSTANCE_COUNT:-1}   # session.env may set 2 (Kubernetes session)
+export TF_VAR_instance_type="$INSTANCE_TYPE" TF_VAR_ami_name_pattern="$AMI_NAME_PATTERN" TF_VAR_instance_count="$INSTANCE_COUNT"
+TOTAL_PER_HOUR=$(awk "BEGIN { print $PRICE_PER_HOUR * $INSTANCE_COUNT }")
 # Optional: AVAILABILITY_ZONE=us-east-1b ./run.sh ...  when AWS has no capacity in the default zone.
 export TF_VAR_availability_zone="${AVAILABILITY_ZONE:-}"
 
@@ -36,7 +38,7 @@ ensure_login() {
 
 cost() {
   local mins=$(( ( $(date +%s) - START ) / 60 ))
-  echo "$mins min so far, about \$$(awk "BEGIN { printf \"%.2f\", $mins / 60 * $PRICE_PER_HOUR }") compute"
+  echo "$mins min so far, about \$$(awk "BEGIN { printf \"%.2f\", $mins / 60 * $TOTAL_PER_HOUR }") compute"
 }
 
 # If anything fails after apply, make it impossible to miss that a VM may be running.
@@ -55,29 +57,45 @@ step 1 "Preflight (free): login, quota, your current IP, agent binary for the VM
 ensure_login
 run "aws sts get-caller-identity --query Account --output text"
 quota=$(aws service-quotas get-service-quota --service-code ec2 --quota-code L-DB2E81BA --region us-east-1 --query Quota.Value --output text)
-note "GPU quota (Running On-Demand G and VT instances): $quota vCPUs (need >= 4)"
-if awk "BEGIN { exit !($quota < 4) }"; then echo "Quota too low; wait for the AWS support case." >&2; exit 1; fi
+need=$(( 4 * INSTANCE_COUNT ))
+note "GPU quota (Running On-Demand G and VT instances): $quota vCPUs (need >= $need for $INSTANCE_COUNT VM(s))"
+if awk "BEGIN { exit !($quota < $need) }"; then echo "Quota too low for $INSTANCE_COUNT VM(s)." >&2; exit 1; fi
 ip=$(curl -s https://checkip.amazonaws.com | tr -d '[:space:]')
 run "printf 'ssh_cidr = \"%s/32\"\n' $ip > $TF/terraform.tfvars && cat $TF/terraform.tfvars"
 run "(cd ../../agent && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $WORK/gpufit-agent ./cmd/gpufit-agent) && file -b $WORK/gpufit-agent | cut -c1-60"
 pause
 
-step 2 "Create the GPU VM ($INSTANCE_TYPE, about \$$PRICE_PER_HOUR/hour). BILLING STARTS when you type 'yes'." \
-       "Check the plan: 10 to add, instance_type $INSTANCE_TYPE, a PyTorch Deep Learning AMI."
+step 2 "Create $INSTANCE_COUNT GPU VM(s) ($INSTANCE_TYPE, about \$$TOTAL_PER_HOUR/hour total). BILLING STARTS when you type 'yes'." \
+       "Check the plan: $(( 10 + INSTANCE_COUNT )) to add, instance_type $INSTANCE_TYPE, a PyTorch Deep Learning AMI."
 ( cd "$TF" && terraform init -input=false >/dev/null )
 APPLIED=1   # from here on, the exit trap warns about a running VM
 ( cd "$TF" && terraform apply )
 START=$(date +%s)
-host=$(cd "$TF" && terraform output -raw ssh | awk '{print $NF}')
-note "VM is up: $host   ($(cost))"
+read -ra HOSTS <<< "$(cd "$TF" && terraform output -json public_ips | jq -r '.[]' | tr '\n' ' ')"
+read -ra PRIVATE_IPS <<< "$(cd "$TF" && terraform output -json private_ips | jq -r '.[]' | tr '\n' ' ')"
+HOSTS=("${HOSTS[@]/#/ubuntu@}")
+host=${HOSTS[0]}
+note "VM(s) up: ${HOSTS[*]}   ($(cost))"
 pause
 
 step 3 "Wait for SSH and for first-boot setup (cloud-init) to finish."
-for i in $(seq 1 60); do ssh "${SSH_OPTS[@]}" "$host" true 2>/dev/null && break; sleep 5; done
-run "ssh ${SSH_OPTS[*]} $host 'cloud-init status --wait >/dev/null; cat /etc/gpufit-terminates-at; nvidia-smi -L'"
+for h in "${HOSTS[@]}"; do
+  for i in $(seq 1 60); do ssh "${SSH_OPTS[@]}" "$h" true 2>/dev/null && break; sleep 5; done
+  run "ssh ${SSH_OPTS[*]} $h 'cloud-init status --wait >/dev/null; cat /etc/gpufit-terminates-at; nvidia-smi -L'"
+done
 note "($(cost))"
 pause
 
+if [[ -f "$SESSION/orchestrate.sh" ]]; then
+  # Multi-VM sessions drive the VMs from this Mac; they write straight into $RESULTS.
+  step 4 "Run $SESSION (about $EXPECTED_MINUTES min). It has its own guided steps."
+  mkdir -p "$RESULTS"
+  HOSTS="${HOSTS[*]}" PRIVATE_IPS="${PRIVATE_IPS[*]}" SSH_OPTS="${SSH_OPTS[*]}" RESULTS="$RESULTS" \
+    AGENT_BIN="$WORK/gpufit-agent" COST_CMD="$(declare -f cost); START=$START; TOTAL_PER_HOUR=$TOTAL_PER_HOUR; cost" \
+    bash "$SESSION/orchestrate.sh" || note "orchestrate.sh failed; results so far are in $RESULTS"
+  note "($(cost))"
+  pause
+else
 step 4 "Upload and run $SESSION ON THE GPU (about $EXPECTED_MINUTES min). Output streams here."
 shopt -s nullglob   # a session may have no .py files of its own
 upload=("$WORK/gpufit-agent" common/bench.py "$SESSION"/*.sh "$SESSION"/*.py)
@@ -92,8 +110,9 @@ mkdir -p "$RESULTS"
 run "scp -r ${SSH_OPTS[*]} '$host:gpufit-results/*' $RESULTS/"
 run "ls $RESULTS | head -30"
 pause
+fi
 
-step 6 "DESTROY the VM. Billing ends when you type 'yes'."
+step 6 "DESTROY the VM(s). Billing ends when you type 'yes'."
 ensure_login
 ( cd "$TF" && terraform destroy )
 APPLIED=0

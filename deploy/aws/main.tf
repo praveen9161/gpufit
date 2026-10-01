@@ -94,6 +94,15 @@ resource "aws_vpc_security_group_ingress_rule" "ssh" {
   to_port           = 22
 }
 
+# The VMs may talk to each other freely (Kubernetes API/kubelet, pod network,
+# GPU-to-GPU training traffic). Still nothing from the internet but SSH.
+resource "aws_vpc_security_group_ingress_rule" "between_vms" {
+  security_group_id            = aws_security_group.gpu.id
+  description                  = "All traffic between GPUFit VMs"
+  referenced_security_group_id = aws_security_group.gpu.id
+  ip_protocol                  = "-1"
+}
+
 resource "aws_vpc_security_group_egress_rule" "all" {
   security_group_id = aws_security_group.gpu.id
   description       = "Outbound (packages, container images)"
@@ -109,6 +118,7 @@ resource "aws_key_pair" "gpufit" {
 }
 
 resource "aws_instance" "gpu" {
+  count                  = var.instance_count
   ami                    = data.aws_ami.gpu.id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
@@ -135,7 +145,7 @@ resource "aws_instance" "gpu" {
     http_tokens = "required" # IMDSv2 only
   }
 
-  tags = { Name = "gpufit-gpu" }
+  tags = { Name = "gpufit-gpu-${count.index}" }
 
   # When a zone is out of GPU capacity, AWS returns InsufficientInstanceCapacity
   # and the provider keeps retrying silently. Give up after a few minutes so the
