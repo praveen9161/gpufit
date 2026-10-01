@@ -1,0 +1,4 @@
+# CPU-only stand-in for pytorch/pytorch (which is x86-only), so session B's
+# Kubernetes workloads can be rehearsed on the Apple Silicon kind cluster.
+FROM python:3.12-slim
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

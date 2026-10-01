@@ -1,0 +1,130 @@
+# GPUFit on a real GPU cluster with NVIDIA's DRA driver (driver gpu.nvidia.com,
+# DeviceClass gpu.nvidia.com, ResourceSlice pool = node name). Used by session B.
+#   - agent: one per GPU node, reads the host's nvidia-smi (NVIDIA runtime injects
+#     it: runtimeClassName nvidia + NVIDIA_VISIBLE_DEVICES=all, utility only;
+#     the agent never allocates a GPU through the scheduler)
+#   - controller: starts with replicas 0 ("without GPUFit"); scale to 1 to turn
+#     placement on. Demo timers: degrade after 20s, recover after 60s.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gpufit
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpufit-scores
+  namespace: gpufit
+---
+# ---- agent ----
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: gpufit-agent, namespace: gpufit}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: gpufit-agent, namespace: gpufit}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-scores"]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: gpufit-agent, namespace: gpufit}
+subjects: [{kind: ServiceAccount, name: gpufit-agent, namespace: gpufit}]
+roleRef: {kind: Role, name: gpufit-agent, apiGroup: rbac.authorization.k8s.io}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata: {name: gpufit-agent, namespace: gpufit}
+spec:
+  selector: {matchLabels: {app: gpufit-agent}}
+  template:
+    metadata: {labels: {app: gpufit-agent}}
+    spec:
+      serviceAccountName: gpufit-agent
+      runtimeClassName: nvidia
+      containers:
+      - name: agent
+        image: gpufit-agent:dev
+        imagePullPolicy: Never
+        # 30s window: short enough to react within a demo, long enough to
+        # hold a degradation seen under load while the GPU is briefly idle.
+        args: ["run", "--collector=nvidia-smi", "--window=30s", "--interval=5s", "--namespace=gpufit"]
+        env:
+        - {name: NODE_NAME, valueFrom: {fieldRef: {fieldPath: spec.nodeName}}}
+        - {name: POD_NAMESPACE, valueFrom: {fieldRef: {fieldPath: metadata.namespace}}}
+        - {name: NVIDIA_VISIBLE_DEVICES, value: all}
+        - {name: NVIDIA_DRIVER_CAPABILITIES, value: utility}
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+          limits: {memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+---
+# ---- controller ----
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: gpufit-controller, namespace: gpufit}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: gpufit-controller, namespace: gpufit}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-scores"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: gpufit-controller, namespace: gpufit}
+subjects: [{kind: ServiceAccount, name: gpufit-controller, namespace: gpufit}]
+roleRef: {kind: Role, name: gpufit-controller, apiGroup: rbac.authorization.k8s.io}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: gpufit-controller}
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "patch"]
+- apiGroups: ["resource.k8s.io"]
+  resources: ["devicetaintrules"]
+  verbs: ["get", "list", "create", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: gpufit-controller}
+subjects: [{kind: ServiceAccount, name: gpufit-controller, namespace: gpufit}]
+roleRef: {kind: ClusterRole, name: gpufit-controller, apiGroup: rbac.authorization.k8s.io}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: gpufit-controller, namespace: gpufit}
+spec:
+  replicas: 0
+  selector: {matchLabels: {app: gpufit-controller}}
+  template:
+    metadata: {labels: {app: gpufit-controller}}
+    spec:
+      serviceAccountName: gpufit-controller
+      containers:
+      - name: controller
+        image: gpufit-agent:dev
+        imagePullPolicy: Never
+        command: ["/gpufit-controller"]
+        args: ["--namespace=gpufit", "--driver=gpu.nvidia.com", "--degrade-after=20s", "--recover-after=60s", "--interval=5s"]
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+          limits: {memory: 64Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: ["ALL"]}
