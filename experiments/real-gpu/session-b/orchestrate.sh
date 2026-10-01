@@ -94,6 +94,9 @@ note "($(cost))"
 pause
 
 step B2 "NVIDIA's DRA driver ($NVIDIA_CHART_VERSION) and the GPUFit image on both nodes."
+# The driver's kubelet plugin only runs on nodes labelled as having an NVIDIA GPU
+# (normally set by node-feature-discovery / GPU feature discovery, not installed here).
+run "kubectl label nodes $NODE_A $NODE_B nvidia.com/gpu.present=true --overwrite"
 run "helm install dra-driver-nvidia-gpu $NVIDIA_CHART --version $NVIDIA_CHART_VERSION --create-namespace --namespace dra-driver-nvidia-gpu --set gpuResourcesEnabledOverride=true --set nvidiaDriverRoot=/ --wait --timeout 5m 2>&1 | tail -4"
 for _ in $(seq 1 40); do [[ $(kubectl get resourceslices -o json | jq '[.items[] | select(.spec.driver == "gpu.nvidia.com") | .spec.devices[]] | length') -ge 2 ]] && break; sleep 3; done
 run "kubectl get resourceslices -o json | jq -r '.items[] | select(.spec.driver == \"gpu.nvidia.com\") | .spec.pool.name as \$p | .spec.devices[] | \"\(\$p)  \(.name)  \(.attributes.productName.string // .attributes.type.string // \"\")\"'"
