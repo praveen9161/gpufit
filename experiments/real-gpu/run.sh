@@ -11,7 +11,8 @@ source ../../scripts/guided-lib.sh
 HERE=$PWD
 SESSION=${1:?usage: run.sh <session-folder>, e.g. session-a2}
 SESSION=${SESSION%/}
-[[ -f "$SESSION/session.env" && -f "$SESSION/session.sh" ]] || { echo "no $SESSION/session.env or session.sh" >&2; exit 1; }
+[[ -f "$SESSION/session.env" && ( -f "$SESSION/session.sh" || -f "$SESSION/orchestrate.sh" ) ]] ||
+  { echo "$SESSION needs session.env plus session.sh (single VM) or orchestrate.sh (multi-VM)" >&2; exit 1; }
 # shellcheck source=/dev/null
 source "$SESSION/session.env"   # INSTANCE_TYPE, PRICE_PER_HOUR, AMI_NAME_PATTERN, EXPECTED_MINUTES
 TF=../../deploy/aws
