@@ -1,0 +1,4 @@
+{
+  "ip-10-42-1-226.json": "{\"gpu-0\":{\"finetune\":78,\"inference\":76,\"training\":50}}",
+  "ip-10-42-1-239.json": "{\"gpu-0\":{\"finetune\":100,\"inference\":100,\"training\":100}}"
+}

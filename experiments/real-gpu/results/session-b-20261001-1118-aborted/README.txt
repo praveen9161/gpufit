@@ -1,0 +1,1 @@
+First attempt, aborted: k3s pod network 10.42.0.0/16 overlapped the VPC; orchestrate failed and the fallback started before it was stopped. Not used for any result. The real run is session-b-20261001-1128.

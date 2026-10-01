@@ -1,0 +1,6 @@
+{
+  "node_a": "ip-10-42-1-239",
+  "node_b": "ip-10-42-1-226",
+  "degraded": "B",
+  "degraded_power_w": 150
+}

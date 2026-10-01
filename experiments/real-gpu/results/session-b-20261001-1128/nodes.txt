@@ -1,0 +1,3 @@
+NAME             STATUS   ROLES           AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION           CONTAINER-RUNTIME         POOL
+ip-10-42-1-226   Ready    <none>          42m   v1.37.1+k3s1   10.42.1.226   <none>        Ubuntu 24.04.5 LTS   7.0.0-1013-aws (amd64)   containerd://2.3.4-k3s1   inference
+ip-10-42-1-239   Ready    control-plane   42m   v1.37.1+k3s1   10.42.1.239   <none>        Ubuntu 24.04.5 LTS   7.0.0-1013-aws (amd64)   containerd://2.3.4-k3s1   training

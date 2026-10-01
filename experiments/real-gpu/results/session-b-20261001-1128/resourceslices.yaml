@@ -1,0 +1,175 @@
+apiVersion: v1
+items:
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceSlice
+  metadata:
+    creationTimestamp: "2026-10-01T16:41:14Z"
+    generateName: 00000-compute-domain.nvidia.com-ip-10-42-1-226-
+    generation: 1
+    name: 00000-compute-domain.nvidia.com-ip-10-42-1-226-wxslx
+    ownerReferences:
+    - apiVersion: v1
+      controller: true
+      kind: Node
+      name: ip-10-42-1-226
+      uid: 3c00bcf6-18dd-4526-8a79-afffca1faee6
+    resourceVersion: "1165"
+    uid: ca220139-1c44-4a8f-9912-3aea5c2a5780
+  spec:
+    devices:
+    - attributes:
+        id:
+          int: 0
+        type:
+          string: channel
+      name: channel-0
+    - attributes:
+        id:
+          int: 0
+        type:
+          string: daemon
+      name: daemon-0
+    driver: compute-domain.nvidia.com
+    nodeName: ip-10-42-1-226
+    pool:
+      generation: 1
+      name: ip-10-42-1-226
+      resourceSliceCount: 1
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceSlice
+  metadata:
+    creationTimestamp: "2026-10-01T16:41:10Z"
+    generateName: 00000-compute-domain.nvidia.com-ip-10-42-1-239-
+    generation: 1
+    name: 00000-compute-domain.nvidia.com-ip-10-42-1-239-5jgzl
+    ownerReferences:
+    - apiVersion: v1
+      controller: true
+      kind: Node
+      name: ip-10-42-1-239
+      uid: a80eeec9-fd85-4438-b4df-25dbc499eef1
+    resourceVersion: "1133"
+    uid: 3c4e8b18-ec54-412b-b096-08993c15c1d4
+  spec:
+    devices:
+    - attributes:
+        id:
+          int: 0
+        type:
+          string: channel
+      name: channel-0
+    - attributes:
+        id:
+          int: 0
+        type:
+          string: daemon
+      name: daemon-0
+    driver: compute-domain.nvidia.com
+    nodeName: ip-10-42-1-239
+    pool:
+      generation: 1
+      name: ip-10-42-1-239
+      resourceSliceCount: 1
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceSlice
+  metadata:
+    creationTimestamp: "2026-10-01T16:41:14Z"
+    generateName: 00000-gpu.nvidia.com-ip-10-42-1-226-
+    generation: 1
+    name: 00000-gpu.nvidia.com-ip-10-42-1-226-rj6ch
+    ownerReferences:
+    - apiVersion: v1
+      controller: true
+      kind: Node
+      name: ip-10-42-1-226
+      uid: 3c00bcf6-18dd-4526-8a79-afffca1faee6
+    resourceVersion: "1158"
+    uid: 74321fe2-0c38-45fb-9faf-8ba0538b6f79
+  spec:
+    devices:
+    - attributes:
+        addressingMode:
+          string: HMM
+        architecture:
+          string: Ampere
+        brand:
+          string: Nvidia
+        cudaComputeCapability:
+          version: 8.6.0
+        cudaDriverVersion:
+          version: 13.2.0
+        driverVersion:
+          version: 595.91.7
+        productName:
+          string: NVIDIA A10G
+        resource.kubernetes.io/pciBusID:
+          string: 0000:00:1e.0
+        resource.kubernetes.io/pcieRoot:
+          string: pci0000:00
+        type:
+          string: gpu
+        uuid:
+          string: GPU-7efb9a71-f2f6-c20a-8ac9-edf172c90756
+      capacity:
+        memory:
+          value: 23028Mi
+      name: gpu-0
+    driver: gpu.nvidia.com
+    nodeName: ip-10-42-1-226
+    pool:
+      generation: 1
+      name: ip-10-42-1-226
+      resourceSliceCount: 1
+- apiVersion: resource.k8s.io/v1
+  kind: ResourceSlice
+  metadata:
+    creationTimestamp: "2026-10-01T16:41:09Z"
+    generateName: 00000-gpu.nvidia.com-ip-10-42-1-239-
+    generation: 1
+    name: 00000-gpu.nvidia.com-ip-10-42-1-239-sqk6j
+    ownerReferences:
+    - apiVersion: v1
+      controller: true
+      kind: Node
+      name: ip-10-42-1-239
+      uid: a80eeec9-fd85-4438-b4df-25dbc499eef1
+    resourceVersion: "1126"
+    uid: b42cdb00-6fe1-4ecc-b6e1-701b9cda671d
+  spec:
+    devices:
+    - attributes:
+        addressingMode:
+          string: HMM
+        architecture:
+          string: Ampere
+        brand:
+          string: Nvidia
+        cudaComputeCapability:
+          version: 8.6.0
+        cudaDriverVersion:
+          version: 13.2.0
+        driverVersion:
+          version: 595.91.7
+        productName:
+          string: NVIDIA A10G
+        resource.kubernetes.io/pciBusID:
+          string: 0000:00:1e.0
+        resource.kubernetes.io/pcieRoot:
+          string: pci0000:00
+        type:
+          string: gpu
+        uuid:
+          string: GPU-fd81d46f-8052-a113-0565-94d616e24799
+      capacity:
+        memory:
+          value: 23028Mi
+      name: gpu-0
+    driver: gpu.nvidia.com
+    nodeName: ip-10-42-1-239
+    pool:
+      generation: 1
+      name: ip-10-42-1-239
+      resourceSliceCount: 1
+kind: List
+metadata:
+  resourceVersion: ""

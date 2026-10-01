@@ -1,0 +1,9 @@
+Pod gpufit-lab/train-2gpu-1-5dwhc: Pending
+Scheduler says: 0/2 nodes are available: 2 cannot allocate all claims. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+
+claim gpu (train-2gpu-1-5dwhc-gpu-8kfs5): NOT allocated
+  ✗ option gpu: needs 1, 0 usable
+      tainted, not tolerated (1): ip-10-42-1-226/gpu-0 (gpufit.io/unfit-training)
+      in use (1): ip-10-42-1-239/gpu-0 -> gpufit-lab/train-2gpu-0-c5q56
+  note: node ip-10-42-1-226 is in the inference pool (gpu-0 training 50 < 80); training claims don't tolerate gpufit.io/unfit-training
+  summary: closest is gpu with 0 of 1 usable; blocked by 1 busy, 1 tainted

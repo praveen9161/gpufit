@@ -1,0 +1,3 @@
+2026/10/01 17:05:44 gpufit-controller: training-min=80 repair-min=50 degrade-after=20s recover-after=1m0s driver=gpu.nvidia.com
+2026/10/01 17:05:44 node ip-10-42-1-226: pool inference (gpu-0 training 50 < 80)
+2026/10/01 17:05:44 node ip-10-42-1-239: pool training (all 1 GPUs training >= 80)

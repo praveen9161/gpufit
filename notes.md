@@ -276,3 +276,14 @@ server-side validation. NOT testable locally: k3s install, NVIDIA DRA driver + C
 NCCL between VMs, 3 GB image pulls -> covered by the fallback.
 Versions: k3s v1.37.1+k3s1, dra-driver-nvidia-gpu chart 0.5.0 (DeviceClass gpu.nvidia.com, pool = node name),
 pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime (same torch as sessions A/A2).
+
+## 2026-10-01 — SESSION B: the project's claim, measured (Kubernetes + real GPUs + cost)
+Details: experiments/real-gpu/results/session-b-20261001-1128/README.md. 2x g5.xlarge, 54 min, ~$1.9.
+Total real-GPU spend so far ~$3.3.
+- k3s v1.37.1 + NVIDIA DRA driver 0.5.0 + GPUFit (real nvidia-smi agent, controller for gpu.nvidia.com) WORKED.
+- Without GPUFit: 2-GPU training with B at 150 W -> 0.84 of healthy (straggler). Efficiency 74%, $1.35/useful GPU-h.
+- With GPUFit: B -> inference pool (DeviceTaintRule), 2-GPU training Pending + `kubectl gpufit why` explains it;
+  training on A at 1.00, inference on degraded B at 0.98. Efficiency 99%, $1.02/useful GPU-h -> -25%.
+- Caveat: no spare GPU -> training job slower (0.67x). Fleet case -> cost calculator.
+- Fixed on the run: k3s pod CIDR clashed with the VPC (10.42/16); NVIDIA DRA plugin needs nvidia.com/gpu.present
+  label; never edit a running bash script (resume.sh rescued the session); don't print the join token.

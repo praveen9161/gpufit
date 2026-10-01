@@ -1,0 +1,227 @@
+NAMESPACE               LAST SEEN   TYPE      REASON                           OBJECT                                                   MESSAGE
+gpufit-lab              31m         Normal    Scheduled                        pod/train-2gpu-0-jgcm8                                   Successfully assigned gpufit-lab/train-2gpu-0-jgcm8 to ip-10-42-1-239
+gpufit-lab              31m         Warning   FailedScheduling                 pod/train-2gpu-0-jgcm8                                   0/2 nodes are available: 2 cannot allocate all claims. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+gpufit-lab              31m         Normal    Scheduled                        pod/train-2gpu-1-w7wzq                                   Successfully assigned gpufit-lab/train-2gpu-1-w7wzq to ip-10-42-1-226
+gpufit-lab              29m         Normal    Scheduled                        pod/train-2gpu-1-trqhq                                   Successfully assigned gpufit-lab/train-2gpu-1-trqhq to ip-10-42-1-239
+gpufit                  34m         Normal    Scheduled                        pod/gpufit-agent-7schc                                   Successfully assigned gpufit/gpufit-agent-7schc to ip-10-42-1-226
+gpufit-lab              20m         Normal    Scheduled                        pod/train-2gpu-1-mlmmc                                   Successfully assigned gpufit-lab/train-2gpu-1-mlmmc to ip-10-42-1-239
+gpufit                  34m         Normal    Scheduled                        pod/gpufit-agent-gn5q9                                   Successfully assigned gpufit/gpufit-agent-gn5q9 to ip-10-42-1-239
+gpufit-lab              19m         Normal    Scheduled                        pod/train-2gpu-1-6nmqc                                   Successfully assigned gpufit-lab/train-2gpu-1-6nmqc to ip-10-42-1-239
+default                 42m         Normal    Starting                         node/ip-10-42-1-226                                      
+gpufit-lab              6m26s       Warning   FailedScheduling                 pod/train-2gpu-1-5dwhc                                   0/2 nodes are available: 2 cannot allocate all claims. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+gpufit-lab              20m         Normal    Scheduled                        pod/train-2gpu-0-vwgqk                                   Successfully assigned gpufit-lab/train-2gpu-0-vwgqk to ip-10-42-1-226
+gpufit                  6m30s       Normal    Scheduled                        pod/gpufit-controller-78dcbd44bb-mfndl                   Successfully assigned gpufit/gpufit-controller-78dcbd44bb-mfndl to ip-10-42-1-226
+gpufit-lab              26m         Normal    Scheduled                        pod/train-1gpu-0-wm7nc                                   Successfully assigned gpufit-lab/train-1gpu-0-wm7nc to ip-10-42-1-226
+gpufit-lab              19m         Normal    Scheduled                        pod/train-2gpu-0-d74jz                                   Successfully assigned gpufit-lab/train-2gpu-0-d74jz to ip-10-42-1-226
+kube-system             42m         Normal    Scheduled                        pod/metrics-server-778c4649b4-87xng                      Successfully assigned kube-system/metrics-server-778c4649b4-87xng to ip-10-42-1-239
+gpufit-lab              3m26s       Normal    Scheduled                        pod/infer-4dkhw                                          Successfully assigned gpufit-lab/infer-4dkhw to ip-10-42-1-226
+gpufit-lab              115s        Normal    Scheduled                        pod/infer-s7fc5                                          Successfully assigned gpufit-lab/infer-s7fc5 to ip-10-42-1-226
+gpufit-lab              6m26s       Normal    Scheduled                        pod/train-2gpu-0-c5q56                                   Successfully assigned gpufit-lab/train-2gpu-0-c5q56 to ip-10-42-1-239
+gpufit-lab              31m         Warning   FailedScheduling                 pod/train-2gpu-1-w7wzq                                   0/2 nodes are available: 2 cannot allocate all claims. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+dra-driver-nvidia-gpu   31m         Normal    Scheduled                        pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Successfully assigned dra-driver-nvidia-gpu/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc to ip-10-42-1-226
+gpufit-lab              3m37s       Normal    Scheduled                        pod/train-1gpu-0-ctwfg                                   Successfully assigned gpufit-lab/train-1gpu-0-ctwfg to ip-10-42-1-239
+gpufit-lab              2m6s        Normal    Scheduled                        pod/train-1gpu-0-rvnbs                                   Successfully assigned gpufit-lab/train-1gpu-0-rvnbs to ip-10-42-1-239
+kube-system             42m         Normal    Scheduled                        pod/helm-install-gateway-api-crd-tl8hx                   Successfully assigned kube-system/helm-install-gateway-api-crd-tl8hx to ip-10-42-1-239
+default                 42m         Normal    Starting                         node/ip-10-42-1-239                                      
+gpufit-lab              29m         Normal    Scheduled                        pod/train-2gpu-0-5vw74                                   Successfully assigned gpufit-lab/train-2gpu-0-5vw74 to ip-10-42-1-226
+kube-system             42m         Normal    Scheduled                        pod/coredns-577d995dff-jpnf4                             Successfully assigned kube-system/coredns-577d995dff-jpnf4 to ip-10-42-1-239
+dra-driver-nvidia-gpu   41m         Normal    Scheduled                        pod/dra-driver-nvidia-gpu-controller-855fb8bb84-cw7c2    Successfully assigned dra-driver-nvidia-gpu/dra-driver-nvidia-gpu-controller-855fb8bb84-cw7c2 to ip-10-42-1-239
+dra-driver-nvidia-gpu   31m         Normal    Scheduled                        pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Successfully assigned dra-driver-nvidia-gpu/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5 to ip-10-42-1-239
+gpufit-lab              34m         Warning   FailedScheduling                 pod/train-2gpu-1-w7wzq                                   0/2 nodes are available: 2 cannot allocate all claims. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+gpufit-lab              34m         Warning   FailedScheduling                 pod/train-2gpu-0-jgcm8                                   0/2 nodes are available: 2 cannot allocate all claims. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+kube-system             42m         Normal    Scheduled                        pod/local-path-provisioner-6858d854cf-9jgnz              Successfully assigned kube-system/local-path-provisioner-6858d854cf-9jgnz to ip-10-42-1-239
+gpufit-lab              25m         Normal    Scheduled                        pod/infer-wtjm5                                          Successfully assigned gpufit-lab/infer-wtjm5 to ip-10-42-1-226
+default                 42m         Normal    NodeHasSufficientPID             node/ip-10-42-1-239                                      Node ip-10-42-1-239 status is now: NodeHasSufficientPID
+default                 42m         Normal    NodeHasSufficientMemory          node/ip-10-42-1-239                                      Node ip-10-42-1-239 status is now: NodeHasSufficientMemory
+default                 42m         Normal    NodeHasNoDiskPressure            node/ip-10-42-1-239                                      Node ip-10-42-1-239 status is now: NodeHasNoDiskPressure
+default                 42m         Normal    NodeAllocatableEnforced          node/ip-10-42-1-239                                      Updated Node Allocatable limit across pods
+default                 42m         Warning   InvalidDiskCapacity              node/ip-10-42-1-239                                      invalid capacity 0 on image filesystem
+default                 42m         Normal    Starting                         node/ip-10-42-1-239                                      Starting kubelet.
+default                 42m         Normal    CertificateExpirationOK          node/ip-10-42-1-239                                      Node and Certificate Authority certificates managed by k3s are OK
+default                 42m         Normal    NodeReady                        node/ip-10-42-1-239                                      Node ip-10-42-1-239 status is now: NodeReady
+kube-system             42m         Normal    ApplyingManifest                 addon/metrics-apiservice                                 Applying manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/metrics-apiservice.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/rolebindings                                       Applied manifest at "/var/lib/rancher/k3s/server/manifests/rolebindings.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/metrics-server-deployment                          Applied manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/metrics-server-deployment.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/metrics-server-deployment                          Applying manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/metrics-server-deployment.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/coredns                                            Applied manifest at "/var/lib/rancher/k3s/server/manifests/coredns.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/gateway-api-crd                                    Applying manifest at "/var/lib/rancher/k3s/server/manifests/gateway-api-crd.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/resource-reader                                    Applying manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/resource-reader.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/auth-delegator                                     Applied manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/auth-delegator.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/auth-reader                                        Applying manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/auth-reader.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/auth-reader                                        Applied manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/auth-reader.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/ccm                                                Applying manifest at "/var/lib/rancher/k3s/server/manifests/ccm.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/aggregated-metrics-reader                          Applying manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/aggregated-metrics-reader.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/resource-reader                                    Applied manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/resource-reader.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/metrics-apiservice                                 Applied manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/metrics-apiservice.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/metrics-server-service                             Applying manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/metrics-server-service.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/metrics-server-service                             Applied manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/metrics-server-service.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/runtimes                                           Applying manifest at "/var/lib/rancher/k3s/server/manifests/runtimes.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/local-storage                                      Applied manifest at "/var/lib/rancher/k3s/server/manifests/local-storage.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/local-storage                                      Applying manifest at "/var/lib/rancher/k3s/server/manifests/local-storage.yaml"
+kube-system             42m         Normal    ApplyJob                         helmchart/gateway-api-crd                                Applying HelmChart from https://%{KUBERNETES_API}%/static/charts/gateway-api-crd-1.6.103.tgz using Job kube-system/helm-install-gateway-api-crd
+kube-system             42m         Normal    AppliedManifest                  addon/gateway-api-crd                                    Applied manifest at "/var/lib/rancher/k3s/server/manifests/gateway-api-crd.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/coredns                                            Applying manifest at "/var/lib/rancher/k3s/server/manifests/coredns.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/rolebindings                                       Applying manifest at "/var/lib/rancher/k3s/server/manifests/rolebindings.yaml"
+kube-system             42m         Normal    ApplyingManifest                 addon/auth-delegator                                     Applying manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/auth-delegator.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/aggregated-metrics-reader                          Applied manifest at "/var/lib/rancher/k3s/server/manifests/metrics-server/aggregated-metrics-reader.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/ccm                                                Applied manifest at "/var/lib/rancher/k3s/server/manifests/ccm.yaml"
+default                 42m         Normal    Synced                           node/ip-10-42-1-239                                      Node synced successfully
+kube-system             42m         Normal    DeletingManifest                 addon/traefik                                            Deleting manifest at "/var/lib/rancher/k3s/server/manifests/traefik.yaml"
+kube-system             42m         Normal    AppliedManifest                  addon/runtimes                                           Applied manifest at "/var/lib/rancher/k3s/server/manifests/runtimes.yaml"
+default                 42m         Normal    NodePasswordValidationComplete   node/ip-10-42-1-239                                      Deferred node password secret validation complete
+default                 42m         Normal    RegisteredNode                   node/ip-10-42-1-239                                      Node ip-10-42-1-239 event: Registered Node ip-10-42-1-239 in Controller
+kube-system             42m         Normal    Suspended                        job/helm-install-gateway-api-crd                         Job suspended
+kube-system             42m         Normal    ScalingReplicaSet                deployment/local-path-provisioner                        Scaled up replica set local-path-provisioner-6858d854cf from 0 to 1
+kube-system             42m         Normal    SuccessfulCreate                 replicaset/metrics-server-778c4649b4                     Created pod: metrics-server-778c4649b4-87xng
+kube-system             42m         Normal    Resumed                          job/helm-install-gateway-api-crd                         Job resumed
+kube-system             42m         Normal    SuccessfulCreate                 replicaset/coredns-577d995dff                            Created pod: coredns-577d995dff-jpnf4
+kube-system             42m         Normal    SuccessfulCreate                 job/helm-install-gateway-api-crd                         Created pod: helm-install-gateway-api-crd-tl8hx
+kube-system             42m         Normal    ScalingReplicaSet                deployment/metrics-server                                Scaled up replica set metrics-server-778c4649b4 from 0 to 1
+kube-system             42m         Normal    SuccessfulCreate                 replicaset/local-path-provisioner-6858d854cf             Created pod: local-path-provisioner-6858d854cf-9jgnz
+kube-system             42m         Normal    ResumeJob                        helmchart/gateway-api-crd                                Resumed synced Job kube-system/helm-install-gateway-api-crd
+kube-system             42m         Normal    ScalingReplicaSet                deployment/coredns                                       Scaled up replica set coredns-577d995dff from 0 to 1
+kube-system             42m         Normal    Pulling                          pod/helm-install-gateway-api-crd-tl8hx                   Pulling image "rancher/klipper-helm:v0.13.3-build20260727"
+kube-system             42m         Normal    Pulling                          pod/metrics-server-778c4649b4-87xng                      Pulling image "rancher/mirrored-metrics-server:v0.9.0"
+kube-system             42m         Normal    Pulling                          pod/coredns-577d995dff-jpnf4                             Pulling image "rancher/mirrored-coredns-coredns:1.14.7"
+kube-system             42m         Normal    Pulling                          pod/local-path-provisioner-6858d854cf-9jgnz              Pulling image "rancher/local-path-provisioner:v0.0.37"
+default                 42m         Normal    CertificateExpirationOK          node/ip-10-42-1-226                                      Node and Certificate Authority certificates managed by k3s are OK
+kube-system             42m         Normal    Created                          pod/local-path-provisioner-6858d854cf-9jgnz              Container created
+kube-system             42m         Normal    Pulled                           pod/local-path-provisioner-6858d854cf-9jgnz              Successfully pulled image "rancher/local-path-provisioner:v0.0.37" in 2.43s (2.43s including waiting). Image size: 15066012 bytes.
+default                 42m         Warning   InvalidDiskCapacity              node/ip-10-42-1-226                                      invalid capacity 0 on image filesystem
+kube-system             42m         Warning   Unhealthy                        pod/coredns-577d995dff-jpnf4                             Readiness probe failed: Get "http://10.244.0.5:8181/ready": dial tcp 10.244.0.5:8181: connect: connection refused
+kube-system             42m         Normal    Created                          pod/coredns-577d995dff-jpnf4                             Container created
+kube-system             42m         Normal    Pulled                           pod/coredns-577d995dff-jpnf4                             Successfully pulled image "rancher/mirrored-coredns-coredns:1.14.7" in 3.19s (3.19s including waiting). Image size: 24261571 bytes.
+default                 42m         Normal    Starting                         node/ip-10-42-1-226                                      Starting kubelet.
+default                 42m         Normal    NodeReady                        node/ip-10-42-1-226                                      Node ip-10-42-1-226 status is now: NodeReady
+default                 42m         Normal    NodeHasSufficientMemory          node/ip-10-42-1-226                                      Node ip-10-42-1-226 status is now: NodeHasSufficientMemory
+kube-system             42m         Normal    Started                          pod/coredns-577d995dff-jpnf4                             Container started
+kube-system             42m         Normal    Started                          pod/local-path-provisioner-6858d854cf-9jgnz              Container started
+default                 42m         Normal    NodeHasNoDiskPressure            node/ip-10-42-1-226                                      Node ip-10-42-1-226 status is now: NodeHasNoDiskPressure
+default                 42m         Normal    NodeHasSufficientPID             node/ip-10-42-1-226                                      Node ip-10-42-1-226 status is now: NodeHasSufficientPID
+default                 42m         Normal    NodeAllocatableEnforced          node/ip-10-42-1-226                                      Updated Node Allocatable limit across pods
+default                 42m         Normal    CIDRAssignmentFailed             node/ip-10-42-1-226                                      Node ip-10-42-1-226 status is now: CIDRAssignmentFailed
+default                 42m         Normal    Synced                           node/ip-10-42-1-226                                      Node synced successfully
+kube-system             42m         Normal    Pulled                           pod/metrics-server-778c4649b4-87xng                      Successfully pulled image "rancher/mirrored-metrics-server:v0.9.0" in 3.514s (3.514s including waiting). Image size: 23258428 bytes.
+kube-system             42m         Normal    Started                          pod/helm-install-gateway-api-crd-tl8hx                   Container started
+kube-system             42m         Normal    Started                          pod/metrics-server-778c4649b4-87xng                      Container started
+kube-system             42m         Warning   Unhealthy                        pod/metrics-server-778c4649b4-87xng                      Readiness probe failed: Get "https://10.244.0.4:10250/readyz": dial tcp 10.244.0.4:10250: connect: connection refused
+kube-system             42m         Normal    Pulled                           pod/helm-install-gateway-api-crd-tl8hx                   Successfully pulled image "rancher/klipper-helm:v0.13.3-build20260727" in 4.287s (4.287s including waiting). Image size: 74172006 bytes.
+kube-system             42m         Normal    Created                          pod/metrics-server-778c4649b4-87xng                      Container created
+kube-system             42m         Normal    Created                          pod/helm-install-gateway-api-crd-tl8hx                   Container created
+default                 42m         Normal    RegisteredNode                   node/ip-10-42-1-226                                      Node ip-10-42-1-226 event: Registered Node ip-10-42-1-226 in Controller
+kube-system             41m         Normal    Completed                        job/helm-install-gateway-api-crd                         Job completed
+kube-system             41m         Warning   Unhealthy                        pod/metrics-server-778c4649b4-87xng                      Readiness probe failed: HTTP probe failed with statuscode: 500
+dra-driver-nvidia-gpu   41m         Normal    SuccessfulCreate                 replicaset/dra-driver-nvidia-gpu-controller-855fb8bb84   Created pod: dra-driver-nvidia-gpu-controller-855fb8bb84-cw7c2
+dra-driver-nvidia-gpu   41m         Normal    ScalingReplicaSet                deployment/dra-driver-nvidia-gpu-controller              Scaled up replica set dra-driver-nvidia-gpu-controller-855fb8bb84 from 0 to 1
+dra-driver-nvidia-gpu   41m         Normal    Pulling                          pod/dra-driver-nvidia-gpu-controller-855fb8bb84-cw7c2    Pulling image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0"
+dra-driver-nvidia-gpu   41m         Normal    Pulled                           pod/dra-driver-nvidia-gpu-controller-855fb8bb84-cw7c2    Successfully pulled image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0" in 6.855s (6.855s including waiting). Image size: 94350036 bytes.
+dra-driver-nvidia-gpu   41m         Normal    Created                          pod/dra-driver-nvidia-gpu-controller-855fb8bb84-cw7c2    Container created
+dra-driver-nvidia-gpu   41m         Normal    Started                          pod/dra-driver-nvidia-gpu-controller-855fb8bb84-cw7c2    Container started
+gpufit                  34m         Normal    SuccessfulCreate                 daemonset/gpufit-agent                                   Created pod: gpufit-agent-7schc
+gpufit                  34m         Normal    SuccessfulCreate                 daemonset/gpufit-agent                                   Created pod: gpufit-agent-gn5q9
+gpufit                  34m         Normal    Created                          pod/gpufit-agent-7schc                                   Container created
+gpufit                  34m         Normal    Pulled                           pod/gpufit-agent-7schc                                   Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit                  34m         Normal    Pulled                           pod/gpufit-agent-gn5q9                                   Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit                  34m         Normal    Created                          pod/gpufit-agent-gn5q9                                   Container created
+gpufit                  34m         Normal    Started                          pod/gpufit-agent-gn5q9                                   Container started
+gpufit                  34m         Normal    Started                          pod/gpufit-agent-7schc                                   Container started
+gpufit-lab              34m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-1-w7wzq
+gpufit-lab              34m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-0-jgcm8
+dra-driver-nvidia-gpu   31m         Normal    SuccessfulCreate                 daemonset/dra-driver-nvidia-gpu-kubelet-plugin           Created pod: dra-driver-nvidia-gpu-kubelet-plugin-cb8jc
+dra-driver-nvidia-gpu   31m         Normal    SuccessfulCreate                 daemonset/dra-driver-nvidia-gpu-kubelet-plugin           Created pod: dra-driver-nvidia-gpu-kubelet-plugin-dwqv5
+dra-driver-nvidia-gpu   31m         Normal    Started                          pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container started
+dra-driver-nvidia-gpu   31m         Normal    Pulling                          pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Pulling image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0"
+dra-driver-nvidia-gpu   31m         Normal    Pulled                           pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0" already present on machine and can be accessed by the pod
+dra-driver-nvidia-gpu   31m         Normal    Created                          pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container created
+dra-driver-nvidia-gpu   31m         Normal    Started                          pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container started
+dra-driver-nvidia-gpu   31m         Normal    Created                          pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container created
+dra-driver-nvidia-gpu   31m         Normal    Pulled                           pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0" already present on machine and can be accessed by the pod
+dra-driver-nvidia-gpu   31m         Normal    Pulled                           pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0" already present on machine and can be accessed by the pod
+dra-driver-nvidia-gpu   31m         Normal    Started                          pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container started
+dra-driver-nvidia-gpu   31m         Normal    Created                          pod/dra-driver-nvidia-gpu-kubelet-plugin-dwqv5           Container created
+gpufit-lab              31m         Normal    Created                          pod/train-2gpu-0-jgcm8                                   Container created
+dra-driver-nvidia-gpu   31m         Normal    Created                          pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container created
+gpufit-lab              31m         Normal    Pulled                           pod/train-2gpu-0-jgcm8                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+dra-driver-nvidia-gpu   31m         Normal    Started                          pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container started
+gpufit-lab              31m         Normal    Started                          pod/train-2gpu-0-jgcm8                                   Container started
+dra-driver-nvidia-gpu   31m         Normal    Pulled                           pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Successfully pulled image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0" in 3.098s (3.098s including waiting). Image size: 94350036 bytes.
+dra-driver-nvidia-gpu   31m         Normal    Started                          pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container started
+dra-driver-nvidia-gpu   31m         Normal    Pulled                           pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0" already present on machine and can be accessed by the pod
+dra-driver-nvidia-gpu   31m         Normal    Created                          pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container created
+dra-driver-nvidia-gpu   31m         Normal    Started                          pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container started
+dra-driver-nvidia-gpu   31m         Normal    Pulled                           pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container image "registry.k8s.io/dra-driver-nvidia/dra-driver-nvidia-gpu:v0.5.0" already present on machine and can be accessed by the pod
+dra-driver-nvidia-gpu   31m         Normal    Created                          pod/dra-driver-nvidia-gpu-kubelet-plugin-cb8jc           Container created
+gpufit-lab              31m         Normal    Pulled                           pod/train-2gpu-1-w7wzq                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              31m         Normal    Created                          pod/train-2gpu-1-w7wzq                                   Container created
+gpufit-lab              31m         Normal    Started                          pod/train-2gpu-1-w7wzq                                   Container started
+gpufit-lab              29m         Normal    Completed                        job/train-2gpu                                           Job completed
+gpufit-lab              29m         Normal    Created                          pod/train-2gpu-0-5vw74                                   Container created
+gpufit-lab              29m         Normal    Pulled                           pod/train-2gpu-0-5vw74                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              29m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-0-5vw74
+gpufit-lab              29m         Normal    Created                          pod/train-2gpu-1-trqhq                                   Container created
+gpufit-lab              29m         Normal    Started                          pod/train-2gpu-0-5vw74                                   Container started
+gpufit-lab              29m         Normal    Started                          pod/train-2gpu-1-trqhq                                   Container started
+gpufit-lab              29m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-1-trqhq
+gpufit-lab              29m         Normal    Pulled                           pod/train-2gpu-1-trqhq                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              28m         Normal    Completed                        job/train-2gpu                                           Job completed
+gpufit-lab              26m         Normal    SuccessfulCreate                 job/train-1gpu                                           Created pod: train-1gpu-0-wm7nc
+gpufit-lab              26m         Normal    Started                          pod/train-1gpu-0-wm7nc                                   Container started
+gpufit-lab              26m         Normal    Pulled                           pod/train-1gpu-0-wm7nc                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              26m         Normal    Created                          pod/train-1gpu-0-wm7nc                                   Container created
+gpufit-lab              25m         Normal    Completed                        job/train-1gpu                                           Job completed
+gpufit-lab              25m         Normal    SuccessfulCreate                 job/infer                                                Created pod: infer-wtjm5
+gpufit-lab              25m         Normal    Started                          pod/infer-wtjm5                                          Container started
+gpufit-lab              25m         Normal    Created                          pod/infer-wtjm5                                          Container created
+gpufit-lab              25m         Normal    Pulled                           pod/infer-wtjm5                                          Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              23m         Normal    Completed                        job/infer                                                Job completed
+gpufit-lab              20m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-1-mlmmc
+gpufit-lab              20m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-0-vwgqk
+gpufit-lab              20m         Normal    Pulled                           pod/train-2gpu-1-mlmmc                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              20m         Normal    Pulled                           pod/train-2gpu-0-vwgqk                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              20m         Normal    Started                          pod/train-2gpu-1-mlmmc                                   Container started
+gpufit-lab              20m         Normal    Created                          pod/train-2gpu-1-mlmmc                                   Container created
+gpufit-lab              20m         Normal    Started                          pod/train-2gpu-0-vwgqk                                   Container started
+gpufit-lab              20m         Normal    Created                          pod/train-2gpu-0-vwgqk                                   Container created
+gpufit-lab              19m         Normal    Completed                        job/train-2gpu                                           Job completed
+gpufit-lab              19m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-0-d74jz
+gpufit-lab              19m         Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-1-6nmqc
+gpufit-lab              19m         Normal    Pulled                           pod/train-2gpu-1-6nmqc                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              19m         Normal    Created                          pod/train-2gpu-0-d74jz                                   Container created
+gpufit-lab              19m         Normal    Started                          pod/train-2gpu-0-d74jz                                   Container started
+gpufit-lab              19m         Normal    Started                          pod/train-2gpu-1-6nmqc                                   Container started
+gpufit-lab              19m         Normal    Created                          pod/train-2gpu-1-6nmqc                                   Container created
+gpufit-lab              19m         Normal    Pulled                           pod/train-2gpu-0-d74jz                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              17m         Normal    Completed                        job/train-2gpu                                           Job completed
+gpufit                  6m31s       Normal    ScalingReplicaSet                deployment/gpufit-controller                             Scaled up replica set gpufit-controller-78dcbd44bb from 0 to 1
+gpufit                  6m31s       Normal    SuccessfulCreate                 replicaset/gpufit-controller-78dcbd44bb                  Created pod: gpufit-controller-78dcbd44bb-mfndl
+default                 6m30s       Normal    GPUFitPoolChanged                node/ip-10-42-1-239                                      pool training (all 1 GPUs training >= 80)
+gpufit                  6m30s       Normal    Pulled                           pod/gpufit-controller-78dcbd44bb-mfndl                   Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit                  6m30s       Normal    Created                          pod/gpufit-controller-78dcbd44bb-mfndl                   Container created
+gpufit                  6m30s       Normal    Started                          pod/gpufit-controller-78dcbd44bb-mfndl                   Container started
+default                 6m30s       Warning   GPUFitPoolChanged                node/ip-10-42-1-226                                      pool inference (gpu-0 training 50 < 80)
+gpufit-lab              6m26s       Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-1-5dwhc
+gpufit-lab              6m26s       Normal    SuccessfulCreate                 job/train-2gpu                                           Created pod: train-2gpu-0-c5q56
+gpufit-lab              6m26s       Normal    Created                          pod/train-2gpu-0-c5q56                                   Container created
+gpufit-lab              6m26s       Normal    Pulled                           pod/train-2gpu-0-c5q56                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              6m25s       Normal    Started                          pod/train-2gpu-0-c5q56                                   Container started
+gpufit-lab              5m50s       Normal    Killing                          pod/train-2gpu-0-c5q56                                   Stopping container train
+gpufit-lab              3m37s       Normal    SuccessfulCreate                 job/train-1gpu                                           Created pod: train-1gpu-0-ctwfg
+gpufit-lab              3m37s       Normal    Pulled                           pod/train-1gpu-0-ctwfg                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              3m37s       Normal    Started                          pod/train-1gpu-0-ctwfg                                   Container started
+gpufit-lab              3m37s       Normal    Created                          pod/train-1gpu-0-ctwfg                                   Container created
+gpufit-lab              3m27s       Normal    SuccessfulCreate                 job/infer                                                Created pod: infer-4dkhw
+gpufit-lab              3m26s       Normal    Created                          pod/infer-4dkhw                                          Container created
+gpufit-lab              3m26s       Normal    Started                          pod/infer-4dkhw                                          Container started
+gpufit-lab              3m26s       Normal    Pulled                           pod/infer-4dkhw                                          Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              2m28s       Normal    Completed                        job/train-1gpu                                           Job completed
+gpufit-lab              2m11s       Normal    Completed                        job/infer                                                Job completed
+gpufit-lab              2m7s        Normal    SuccessfulCreate                 job/train-1gpu                                           Created pod: train-1gpu-0-rvnbs
+gpufit-lab              2m6s        Normal    Created                          pod/train-1gpu-0-rvnbs                                   Container created
+gpufit-lab              2m6s        Normal    Started                          pod/train-1gpu-0-rvnbs                                   Container started
+gpufit-lab              2m6s        Normal    Pulled                           pod/train-1gpu-0-rvnbs                                   Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              116s        Normal    SuccessfulCreate                 job/infer                                                Created pod: infer-s7fc5
+gpufit-lab              115s        Normal    Started                          pod/infer-s7fc5                                          Container started
+gpufit-lab              115s        Normal    Created                          pod/infer-s7fc5                                          Container created
+gpufit-lab              115s        Normal    Pulled                           pod/infer-s7fc5                                          Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab              57s         Normal    Completed                        job/train-1gpu                                           Job completed
+gpufit-lab              41s         Normal    Completed                        job/infer                                                Job completed

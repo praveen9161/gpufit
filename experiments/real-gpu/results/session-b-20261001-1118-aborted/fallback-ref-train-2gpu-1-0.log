@@ -1,0 +1,7 @@
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/opt/pytorch/lib/python3.13/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+{"workload": "train_ddp", "world_size": 2, "device": "NVIDIA A10G", "tokens_per_s": 127477.4, "tokens_per_s_per_gpu": 63738.7, "step_s": 2.056, "steps": 30, "seconds": 61.7, "params_m": 134.3, "hidden": 2048, "layers": 4, "micro_batch": 8192, "accum": 16, "torch": "2.12.1+cu130"}
