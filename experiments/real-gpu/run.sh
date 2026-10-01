@@ -90,7 +90,7 @@ if [[ -f "$SESSION/orchestrate.sh" ]]; then
   # Multi-VM sessions drive the VMs from this Mac; they write straight into $RESULTS.
   step 4 "Run $SESSION (about $EXPECTED_MINUTES min). It has its own guided steps."
   mkdir -p "$RESULTS"
-  HOSTS="${HOSTS[*]}" PRIVATE_IPS="${PRIVATE_IPS[*]}" SSH_OPTS="${SSH_OPTS[*]}" RESULTS="$RESULTS" \
+  HOSTS="${HOSTS[*]}" PRIVATE_IPS="${PRIVATE_IPS[*]}" SSH_OPTS="${SSH_OPTS[*]}" RESULTS="$RESULTS" PRICE_PER_HOUR="$PRICE_PER_HOUR" \
     AGENT_BIN="$WORK/gpufit-agent" COST_CMD="$(declare -f cost); START=$START; TOTAL_PER_HOUR=$TOTAL_PER_HOUR; cost" \
     bash "$SESSION/orchestrate.sh" || note "orchestrate.sh failed; results so far are in $RESULTS"
   note "($(cost))"
