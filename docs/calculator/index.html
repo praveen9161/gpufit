@@ -1,0 +1,409 @@
+<title>GPUFit Savings Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an operator's worksheet. Inputs left, the bill right, the measurements that back it below. */
+:root {
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --ink: #111821;
+  --ink-2: #4c5766;
+  --ink-3: #6f7a88;
+  --line: #d8dee6;
+  --accent: #1f5fae;
+  --accent-soft: #e3ecf8;
+  --waste: #b4432f;
+  --waste-soft: #f7e4df;
+  --save: #1d7a4a;
+  --save-soft: #dff1e6;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --f-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141a; --panel: #161d25; --ink: #eef2f6; --ink-2: #b3bdc9; --ink-3: #8c97a5;
+    --line: #2a333e; --accent: #6ea5ea; --accent-soft: #1b2a3d;
+    --waste: #ec7e69; --waste-soft: #3a211c; --save: #5cc78f; --save-soft: #17301f;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141a; --panel: #161d25; --ink: #eef2f6; --ink-2: #b3bdc9; --ink-3: #8c97a5;
+  --line: #2a333e; --accent: #6ea5ea; --accent-soft: #1b2a3d;
+  --waste: #ec7e69; --waste-soft: #3a211c; --save: #5cc78f; --save-soft: #17301f;
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; letter-spacing: .01em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 4.2vw, 2.9rem); line-height: 1.02; font-weight: 700; }
+h2 { font-size: 1.55rem; line-height: 1.1; }
+h3 { font-size: 1.15rem; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 .74rem/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--ink-2); font-size: 1.02rem; }
+header { display: grid; gap: 10px; }
+.num, input, output, td.n, .tick { font-variant-numeric: tabular-nums; }
+
+.sheet { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .sheet { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 18px; min-width: 0; }
+
+.field { display: grid; gap: 6px; }
+.field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.field label { font-weight: 600; font-size: .92rem; }
+.field output { font: 500 .95rem var(--f-mono); color: var(--accent); }
+.hint { font-size: .8rem; color: var(--ink-3); }
+.tag { display: inline-block; font: 500 .66rem/1.6 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; padding: 0 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+.tag.measured { color: var(--save); background: var(--save-soft); }
+.tag.guess { color: var(--waste); background: var(--waste-soft); }
+.tag.est { color: var(--ink-2); background: var(--accent-soft); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+input[type=number], select {
+  width: 100%; font: 500 .95rem var(--f-mono); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+}
+select { font-family: var(--f-body); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 420px) { .pair { grid-template-columns: 1fr; } }
+.scenario-note { font-size: .82rem; color: var(--ink-2); border-left: 2px solid var(--line); padding-left: 10px; }
+
+.headline { display: grid; gap: 4px; }
+.headline .big { font: 700 clamp(2.4rem, 6vw, 3.6rem)/1 var(--f-display); color: var(--save); }
+.headline .big.neg { color: var(--waste); }
+.headline .sub { color: var(--ink-2); }
+.figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 560px) { .figures { grid-template-columns: 1fr; } }
+.fig { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 2px; }
+.fig .v { font: 500 1.25rem var(--f-mono); }
+.fig .k { font-size: .78rem; color: var(--ink-3); }
+
+.bars { display: grid; gap: 12px; }
+.bar-row { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) 6.5rem; gap: 10px; align-items: center; font-size: .88rem; }
+@media (max-width: 480px) { .bar-row { grid-template-columns: minmax(0,1fr) 5.5rem; } .bar-row .track { grid-column: 1 / -1; grid-row: 2; } }
+.track { height: 14px; background: var(--bg); border-radius: 0 4px 4px 0; overflow: hidden; }
+.fill { height: 100%; border-radius: 0 4px 4px 0; transition: width .25s ease; }
+.fill.waste { background: var(--waste); }
+.fill.cost { background: var(--ink-3); }
+.bar-row .v { font-family: var(--f-mono); text-align: right; }
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+
+.assume { font-size: .84rem; color: var(--ink-2); display: grid; gap: 6px; padding-left: 1.1em; margin: 0; }
+
+.basis { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .basis { grid-template-columns: minmax(0, 1fr); } }
+.chart-wrap { position: relative; }
+.chart-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: 8px 10px; font-size: .8rem; box-shadow: 0 4px 14px rgb(0 0 0 / .12);
+  display: grid; gap: 3px; min-width: 11rem;
+}
+.tip b { font-family: var(--f-mono); font-weight: 500; }
+.tip .row { display: flex; justify-content: space-between; gap: 14px; }
+.tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .84rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { font-weight: 600; color: var(--ink-2); font-size: .78rem; }
+td.n, th.n { text-align: right; font-family: var(--f-mono); }
+.src { font-size: .78rem; color: var(--ink-3); }
+code { font-family: var(--f-mono); font-size: .86em; }
+footer { font-size: .8rem; color: var(--ink-3); display: grid; gap: 6px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">GPUFit · cost model</div>
+    <h1>GPUFit Savings Calculator</h1>
+    <p class="lede">One degraded GPU in a synchronous training job slows the whole job, and every GPU in it is billed for the lost time. GPUFit moves that GPU to inference and gives training a healthy one. Enter your fleet; the slowdowns come from measurements on real A10G GPUs.</p>
+  </header>
+
+  <section class="sheet" aria-label="Calculator">
+    <form class="panel" id="inputs" autocomplete="off">
+      <h2>Your fleet</h2>
+
+      <div class="field">
+        <div class="field-head"><label for="fleet">GPUs in the fleet</label><output id="fleet-out" for="fleet"></output></div>
+        <input type="range" id="fleet" min="16" max="20000" step="16" value="1024">
+      </div>
+
+      <div class="pair">
+        <div class="field">
+          <label for="price">Price per GPU-hour ($)</label>
+          <input type="number" id="price" min="0.1" max="20" step="0.01" value="2.00">
+        </div>
+        <div class="field">
+          <label for="util">Busy share of the year (%)</label>
+          <input type="number" id="util" min="1" max="100" step="1" value="85">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><label for="degraded">GPUs degraded but still usable <span class="tag guess">your number</span></label><output id="degraded-out" for="degraded"></output></div>
+        <input type="range" id="degraded" min="0" max="10" step="0.1" value="2">
+        <span class="hint">The biggest unknown. Real rates aren't public; use your own fleet's history.</span>
+      </div>
+
+      <div class="pair">
+        <div class="field">
+          <div class="field-head"><label for="train">Training share (%)</label><output id="train-out" for="train"></output></div>
+          <input type="range" id="train" min="0" max="100" step="5" value="60">
+          <span class="hint">Share of degraded GPUs that would sit in training jobs.</span>
+        </div>
+        <div class="field">
+          <label for="job">GPUs per training job</label>
+          <input type="number" id="job" min="1" max="4096" step="1" value="8">
+          <span class="hint">One straggler slows all of them.</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="scenario">How degraded is the GPU?</label>
+        <select id="scenario"></select>
+        <p class="scenario-note" id="scenario-note"></p>
+      </div>
+
+      <div class="pair" id="custom" hidden>
+        <div class="field">
+          <div class="field-head"><label for="strain">Training speed</label><output id="strain-out" for="strain"></output></div>
+          <input type="range" id="strain" min="0.2" max="1" step="0.01" value="0.84">
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="sinf">Inference speed</label><output id="sinf-out" for="sinf"></output></div>
+          <input type="range" id="sinf" min="0.2" max="1" step="0.01" value="0.98">
+        </div>
+      </div>
+    </form>
+
+    <div class="panel" aria-live="polite">
+      <h2>The bill</h2>
+      <div class="headline">
+        <div class="big num" id="annual">$0</div>
+        <div class="sub" id="annual-sub">saved per year</div>
+      </div>
+      <div class="figures">
+        <div class="fig"><span class="v" id="incidents">0</span><span class="k">training jobs running with a straggler at any time</span></div>
+        <div class="fig"><span class="v" id="per-incident">0</span><span class="k">GPU-hours recovered per straggler per day</span></div>
+        <div class="fig"><span class="v" id="fleet-pct">0%</span><span class="k">of the whole fleet's paid time recovered</span></div>
+      </div>
+
+      <h3>Paid GPU time lost, per hour</h3>
+      <div class="bars">
+        <div class="bar-row"><span>Without GPUFit</span><div class="track"><div class="fill waste" id="bar-without"></div></div><span class="v" id="v-without">0</span></div>
+        <div class="bar-row"><span>With GPUFit</span><div class="track"><div class="fill cost" id="bar-with"></div></div><span class="v" id="v-with">0</span></div>
+      </div>
+      <p class="hint" id="bars-note"></p>
+
+      <h3>What the model assumes</h3>
+      <ul class="assume">
+        <li>A synchronous job runs at its slowest GPU's pace. Measured in session B: one A10G at 150 W slowed a 2-GPU job to 0.84.</li>
+        <li>With GPUFit, the degraded GPU swaps places with a healthy GPU from the inference side, so training runs at full speed and inference loses only the degraded GPU's shortfall.</li>
+        <li>There is enough inference work to absorb the degraded GPUs, and the swap is quick compared with how long a GPU stays degraded. Job restarts and checkpoint costs are left out.</li>
+        <li>Only stragglers are counted. GPUs that are broken outright, rather than slow, are a different problem.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="basis-h">
+    <div class="eyebrow">Where the slowdowns come from</div>
+    <h2 id="basis-h">Same GPU, same power cap, very different damage</h2>
+    <p class="lede">Session A2 lowered an NVIDIA A10G's power limit from 300 W to 100 W and measured three workloads, three runs each (spread under 0.5%). Heavy matrix work, typical of training, collapses; memory-bound work, typical of LLM inference, does not move.</p>
+    <div class="basis">
+      <div class="chart-wrap" id="chart">
+        <div class="legend" id="legend"></div>
+        <svg id="svg" viewBox="0 0 640 330" role="img" aria-label="Throughput versus power limit for three workloads on an A10G"></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption class="src" style="caption-side: bottom; text-align: left; padding-top: 8px;">Throughput relative to 300 W. Source: <code>experiments/real-gpu/results/session-a2-20261001-0929</code>.</caption>
+          <thead><tr><th>Power limit</th><th class="n">Matrix multiply</th><th class="n">CNN step</th><th class="n">Memory copy</th></tr></thead>
+          <tbody id="table"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Built from GPUFit's real-GPU sessions on AWS (Tesla T4, A10G). Inputs marked <em>your number</em> are not measurements. Scenario values marked <em>estimate</em> extend a measurement and say how.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+  // Measured throughput vs a healthy GPU. train = the job's training speed on the degraded GPU,
+  // infer = memory-bound (decode-style) inference speed on it.
+  const SCENARIOS = [
+    { id: "b150", label: "A10G at 150 W, mixed training model (session B)", train: 0.84, infer: 0.98,
+      note: "Both measured in session B on real A10Gs: the 2-GPU training job ran at 0.84, decode-style inference on the degraded GPU at 0.98.", tags: ["measured", "measured"] },
+    { id: "a2-150", label: "A10G at 150 W, heavy matrix training (session A2)", train: 0.68, infer: 0.98,
+      note: "Training 0.68: fp16 matrix multiply measured in session A2. Inference 0.98: decode-style inference measured at 150 W in session B.", tags: ["measured", "measured"] },
+    { id: "a2-100", label: "A10G at 100 W, heavy matrix training (session A2)", train: 0.35, infer: 0.95,
+      note: "Training 0.35 measured in session A2. Inference 0.95 is an estimate: memory bandwidth stayed at 1.00 at 100 W in A2, but decode inference wasn't run at 100 W.", tags: ["measured", "est"] },
+    { id: "a2-clk70", label: "A10G clock locked at 70%, CNN training (session A2)", train: 0.87, infer: 0.98,
+      note: "Training 0.87: CNN step with the clock locked at 70% in session A2. Inference 0.98 is an estimate: memory bandwidth stayed at 1.00 under clock locks.", tags: ["measured", "est"] },
+    { id: "custom", label: "Custom", train: null, infer: null, note: "Set the two speeds yourself.", tags: [] },
+  ];
+  const BASIS = [ // session A2, A10G, median of 3 runs, vs 300 W
+    { w: 300, gemm: 1.00, cnn: 1.00, copy: 1.00 },
+    { w: 250, gemm: 0.94, cnn: 1.00, copy: 1.00 },
+    { w: 200, gemm: 0.84, cnn: 0.99, copy: 1.00 },
+    { w: 150, gemm: 0.68, cnn: 0.94, copy: 1.00 },
+    { w: 100, gemm: 0.35, cnn: 0.71, copy: 1.00 },
+  ];
+  const SERIES = [
+    { key: "copy", name: "Memory copy (inference-like)", color: "--series-3" },
+    { key: "cnn", name: "CNN step (lighter training)", color: "--series-2" },
+    { key: "gemm", name: "Matrix multiply (heavy training)", color: "--series-1" },
+  ];
+
+  const $ = id => document.getElementById(id);
+  const sel = $("scenario");
+  for (const s of SCENARIOS) sel.add(new Option(s.label, s.id));
+
+  const fmtInt = n => Math.round(n).toLocaleString("en-US");
+  const fmt1 = n => n.toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+  const money = n => {
+    const a = Math.abs(n), s = n < 0 ? "-$" : "$";
+    if (a >= 1e6) return s + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + "M";
+    if (a >= 1e3) return s + Math.round(a / 1e3).toLocaleString("en-US") + "k";
+    return s + Math.round(a).toLocaleString("en-US");
+  };
+  const tagHtml = t => t === "measured" ? '<span class="tag measured">measured</span>' : t === "est" ? '<span class="tag est">estimate</span>' : "";
+
+  // Pure model: per hour, in GPU-hours.
+  function model(p) {
+    const incidents = p.fleet * p.degraded / 100 * p.train / 100;      // degraded GPUs sitting in training jobs
+    const lostWithout = incidents * p.job * (1 - p.strain);             // the whole job slows to the straggler's pace
+    const lostWith = incidents * (1 - p.sinf);                          // the degraded GPU serves inference instead
+    const recovered = lostWithout - lostWith;
+    const hours = 8760 * p.util / 100;
+    return {
+      incidents, lostWithout, lostWith, recovered,
+      annual: recovered * p.price * hours,
+      perIncidentDay: p.job * (1 - p.strain) * 24 - (1 - p.sinf) * 24,
+      fleetPct: p.fleet ? recovered / p.fleet * 100 : 0,
+    };
+  }
+
+  function read() {
+    const sc = SCENARIOS.find(s => s.id === sel.value);
+    const custom = sc.id === "custom";
+    $("custom").hidden = !custom;
+    return {
+      sc,
+      fleet: +$("fleet").value, price: +$("price").value || 0, util: +$("util").value || 0,
+      degraded: +$("degraded").value, train: +$("train").value, job: Math.max(1, +$("job").value || 1),
+      strain: custom ? +$("strain").value : sc.train, sinf: custom ? +$("sinf").value : sc.infer,
+    };
+  }
+
+  function render() {
+    const p = read();
+    $("fleet-out").textContent = fmtInt(p.fleet);
+    $("degraded-out").textContent = p.degraded.toFixed(1) + "%";
+    $("train-out").textContent = p.train + "%";
+    $("strain-out").textContent = p.strain.toFixed(2);
+    $("sinf-out").textContent = p.sinf.toFixed(2);
+    const t = p.sc.tags;
+    $("scenario-note").innerHTML = p.sc.id === "custom" ? p.sc.note
+      : `Training speed <b class="num">${p.strain.toFixed(2)}</b>${tagHtml(t[0])}, inference speed <b class="num">${p.sinf.toFixed(2)}</b>${tagHtml(t[1])}. ${p.sc.note}`;
+
+    const m = model(p);
+    const big = $("annual");
+    big.textContent = money(m.annual);
+    big.classList.toggle("neg", m.annual < 0);
+    $("annual-sub").textContent = m.annual >= 0
+      ? `saved per year at $${p.price.toFixed(2)} per GPU-hour, ${p.util}% busy`
+      : "GPUFit costs more than it saves here: the GPU is too slow even for inference, or jobs are tiny.";
+    $("incidents").textContent = fmt1(m.incidents);
+    $("per-incident").textContent = fmt1(m.perIncidentDay);
+    $("fleet-pct").textContent = m.fleetPct.toFixed(2) + "%";
+
+    const max = Math.max(m.lostWithout, m.lostWith, 1e-9);
+    $("bar-without").style.width = (m.lostWithout / max * 100) + "%";
+    $("bar-with").style.width = (m.lostWith / max * 100) + "%";
+    $("v-without").textContent = fmt1(m.lostWithout) + " GPU-h";
+    $("v-with").textContent = fmt1(m.lostWith) + " GPU-h";
+    $("bars-note").textContent = `Without GPUFit, each straggler wastes ${fmtInt(p.job)} × ${(1 - p.strain).toFixed(2)} GPU-hours every hour. With it, the waste is the degraded GPU's own inference shortfall, ${(1 - p.sinf).toFixed(2)} GPU-hours per hour.`;
+  }
+
+  // ---- chart: throughput vs power limit, three series, crosshair tooltip ----
+  const svg = $("svg"), tip = $("tip"), chart = $("chart");
+  const W = 640, H = 330, M = { l: 44, r: 150, t: 14, b: 40 };
+  const x = w => M.l + (300 - w) / 200 * (W - M.l - M.r);
+  const y = v => M.t + (1.05 - v) / 0.8 * (H - M.t - M.b);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+
+  function drawChart() {
+    svg.replaceChildren();
+    const ink3 = css("--ink-3"), line = css("--line"), ink2 = css("--ink-2"), panel = css("--panel");
+    for (const v of [0.25, 0.5, 0.75, 1.0]) {
+      el("line", { x1: M.l, x2: W - M.r, y1: y(v), y2: y(v), stroke: line, "stroke-width": 1 });
+      const t = el("text", { x: M.l - 8, y: y(v) + 4, "text-anchor": "end", fill: ink3, "font-size": 11, "font-family": css("--f-mono"), class: "tick" });
+      t.textContent = v.toFixed(2);
+    }
+    for (const d of BASIS) {
+      const t = el("text", { x: x(d.w), y: H - M.b + 18, "text-anchor": "middle", fill: ink3, "font-size": 11, "font-family": css("--f-mono"), class: "tick" });
+      t.textContent = d.w + " W";
+    }
+    const xl = el("text", { x: M.l + (W - M.l - M.r) / 2, y: H - 4, "text-anchor": "middle", fill: ink2, "font-size": 11.5, "font-family": css("--f-body") });
+    xl.textContent = "Power limit (default 300 W)";
+    // Lines: 2px, 8px markers with a surface ring; direct labels at the right end.
+    const labelY = [];
+    for (const s of SERIES) {
+      const c = css(s.color);
+      el("polyline", { points: BASIS.map(d => `${x(d.w)},${y(d[s.key])}`).join(" "), fill: "none", stroke: c, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" });
+      for (const d of BASIS) el("circle", { cx: x(d.w), cy: y(d[s.key]), r: 4, fill: c, stroke: panel, "stroke-width": 2 });
+      const end = BASIS[BASIS.length - 1];
+      let ly = y(end[s.key]) + 4;
+      for (const prev of labelY) if (Math.abs(prev - ly) < 14) ly = prev + 14;
+      labelY.push(ly);
+      const lab = el("text", { x: x(100) + 10, y: ly, fill: ink2, "font-size": 11.5, "font-family": css("--f-body") });
+      lab.textContent = `${s.name.split(" (")[0]} ${end[s.key].toFixed(2)}`;
+    }
+    const cross = el("line", { x1: 0, x2: 0, y1: M.t, y2: H - M.b, stroke: ink3, "stroke-width": 1, "stroke-dasharray": "3 3", visibility: "hidden" });
+    const hit = el("rect", { x: M.l - 20, y: M.t, width: W - M.l - M.r + 40, height: H - M.t - M.b, fill: "transparent" });
+    const show = evt => {
+      const r = svg.getBoundingClientRect(), sx = (evt.clientX - r.left) / r.width * W;
+      const d = BASIS.reduce((a, b) => Math.abs(x(b.w) - sx) < Math.abs(x(a.w) - sx) ? b : a);
+      cross.setAttribute("x1", x(d.w)); cross.setAttribute("x2", x(d.w)); cross.setAttribute("visibility", "visible");
+      tip.innerHTML = `<div><b>${d.w} W</b> power limit</div>` + SERIES.map(s =>
+        `<div class="row"><span><span class="sw" style="background:${css(s.color)}"></span>${s.name.split(" (")[0]}</span><b>${d[s.key].toFixed(2)}</b></div>`).join("");
+      tip.hidden = false;
+      const cw = chart.clientWidth, px = x(d.w) / W * r.width;
+      tip.style.left = Math.min(Math.max(px + 12, 0), cw - tip.offsetWidth) + "px";
+      tip.style.top = (r.top - chart.getBoundingClientRect().top + 30) + "px";
+    };
+    hit.addEventListener("pointermove", show);
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  }
+
+  $("legend").innerHTML = SERIES.slice().reverse().map(s => `<span><i style="background:var(${s.color})"></i>${s.name}</span>`).join("");
+  $("table").innerHTML = BASIS.map(d => `<tr><td>${d.w} W</td><td class="n">${d.gemm.toFixed(2)}</td><td class="n">${d.cnn.toFixed(2)}</td><td class="n">${d.copy.toFixed(2)}</td></tr>`).join("");
+
+  $("inputs").addEventListener("input", render);
+  $("inputs").addEventListener("submit", e => e.preventDefault());
+  render();
+  drawChart();
+  const mq = matchMedia("(prefers-color-scheme: dark)");
+  mq.addEventListener?.("change", drawChart);
+  new MutationObserver(drawChart).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  document.fonts?.ready.then(drawChart);
+})();
+</script>

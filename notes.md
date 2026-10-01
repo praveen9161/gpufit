@@ -287,3 +287,10 @@ Total real-GPU spend so far ~$3.3.
 - Caveat: no spare GPU -> training job slower (0.67x). Fleet case -> cost calculator.
 - Fixed on the run: k3s pod CIDR clashed with the VPC (10.42/16); NVIDIA DRA plugin needs nvidia.com/gpu.present
   label; never edit a running bash script (resume.sh rescued the session); don't print the join token.
+
+## 2026-10-01 — Cost calculator (docs/calculator/index.html)
+Model per hour, in GPU-hours: stragglers = fleet x degraded% x training share; lost without GPUFit =
+stragglers x job GPUs x (1 - training speed); lost with GPUFit = stragglers x (1 - inference speed) (degraded GPU
+swaps with a healthy one from the inference side). Scenarios from sessions A2/B, each value tagged measured or
+estimate; degraded% is the user's own number (no public data). Default example (1024 GPUs, 2%, 60%, 8-GPU jobs,
+session B speeds, $2/h, 85% busy): ~15.5 GPU-h/h recovered, ~$231k/yr, ~1.5% of fleet time. Example inputs, not a claim.
