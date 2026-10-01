@@ -67,9 +67,16 @@ run_job() {  # run_job <scenario> <rep> <render command...> : apply, wait, recor
 
 # ---------------------------------------------------------------------------------
 step B1 "Kubernetes (k3s $K3S_VERSION): server on A, agent on B, over the VMs' private network."
-run "on $A 'curl -sfL https://get.k3s.io | sudo INSTALL_K3S_VERSION=$K3S_VERSION sh -s - server --node-ip $PA --disable traefik --disable servicelb --write-kubeconfig-mode 644 >/dev/null && sudo k3s --version | head -1'"
+# k3s' default pod network (10.42.0.0/16) overlaps the VPC (deploy/aws: 10.42.0.0/16): A then routes
+# B's real address into the pod network and nothing connects. Use ranges that can't clash.
+K3S_NET="--cluster-cidr 10.244.0.0/16 --service-cidr 10.96.0.0/16"
+note "Removing any k3s left from an earlier attempt (safe to re-run)."
+on "$A" 'if [ -x /usr/local/bin/k3s-uninstall.sh ]; then sudo /usr/local/bin/k3s-uninstall.sh >/dev/null 2>&1; fi; true'
+on "$B" 'if [ -x /usr/local/bin/k3s-agent-uninstall.sh ]; then sudo /usr/local/bin/k3s-agent-uninstall.sh >/dev/null 2>&1; fi; true'
+run "on $A 'curl -sfL https://get.k3s.io | sudo INSTALL_K3S_VERSION=$K3S_VERSION sh -s - server --node-ip $PA $K3S_NET --disable traefik --disable servicelb --write-kubeconfig-mode 644 >/dev/null && sudo k3s --version | head -1'"
 TOKEN=$(on "$A" sudo cat /var/lib/rancher/k3s/server/node-token)
-run "on $B 'curl -sfL https://get.k3s.io | sudo INSTALL_K3S_VERSION=$K3S_VERSION K3S_URL=https://$PA:6443 K3S_TOKEN=$TOKEN sh -s - agent --node-ip $PB >/dev/null && echo agent installed'"
+note "Joining B with the cluster token (not printed)."
+on "$B" "curl -sfL https://get.k3s.io | sudo INSTALL_K3S_VERSION=$K3S_VERSION K3S_URL=https://$PA:6443 K3S_TOKEN=$TOKEN sh -s - agent --node-ip $PB >/dev/null && echo agent installed"
 on "$A" cat /etc/rancher/k3s/k3s.yaml | sed "s#https://127.0.0.1:6443#https://127.0.0.1:$TUNNEL_PORT#" > "$KUBECONFIG"
 ssh "${SSHO[@]}" -fN -L "$TUNNEL_PORT:127.0.0.1:6443" -o ExitOnForwardFailure=yes "$A"
 TUNNEL_PID=$(pgrep -f "$TUNNEL_PORT:127.0.0.1:6443" | head -1)
