@@ -1,13 +1,12 @@
-From ec21d2ac1debcfad17683b2b618fb00877c28304 Mon Sep 17 00:00:00 2001
+From 5728e2106231013cb03074099221de05cfbf6a04 Mon Sep 17 00:00:00 2001
 From: Praveen <113331169+praveen9161@users.noreply.github.com>
-Date: Tue, 29 Sep 2026 13:29:18 -0500
+Date: Thu, 1 Oct 2026 13:19:36 -0500
 Subject: [PATCH 2/2] GPUFit: read per-node scores key, fall back to
  scores.json
 
 The in-cluster gpufit-agent on each node server-side-applies its own key
 "<node>.json" into the scores ConfigMap. The driver now prefers its node's
 key and falls back to the cluster-wide "scores.json" written by the CLI.
-
 ---
  .../gpufit_scores.go                          | 20 +++++++++++++++----
  .../gpufit_scores_test.go                     | 13 ++++++++++++
