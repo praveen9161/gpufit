@@ -92,7 +92,16 @@ if [[ -f "$SESSION/orchestrate.sh" ]]; then
   mkdir -p "$RESULTS"
   HOSTS="${HOSTS[*]}" PRIVATE_IPS="${PRIVATE_IPS[*]}" SSH_OPTS="${SSH_OPTS[*]}" RESULTS="$RESULTS" PRICE_PER_HOUR="$PRICE_PER_HOUR" \
     AGENT_BIN="$WORK/gpufit-agent" COST_CMD="$(declare -f cost); START=$START; TOTAL_PER_HOUR=$TOTAL_PER_HOUR; cost" \
-    bash "$SESSION/orchestrate.sh" || note "orchestrate.sh failed; results so far are in $RESULTS"
+    bash "$SESSION/orchestrate.sh" || {
+      note "orchestrate.sh failed; results so far are in $RESULTS"
+      if [[ -f "$SESSION/fallback.sh" ]]; then
+        note "FALLBACK: run the same measurement without Kubernetes, so this paid time still yields numbers."
+        pause
+        mv "$RESULTS/results.jsonl" "$RESULTS/results-kubernetes-partial.jsonl" 2>/dev/null || true
+        HOSTS="${HOSTS[*]}" PRIVATE_IPS="${PRIVATE_IPS[*]}" SSH_OPTS="${SSH_OPTS[*]}" RESULTS="$RESULTS" PRICE_PER_HOUR="$PRICE_PER_HOUR" \
+          bash "$SESSION/fallback.sh" || note "fallback.sh failed too; results so far are in $RESULTS"
+      fi
+    }
   note "($(cost))"
   pause
 else

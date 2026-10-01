@@ -263,3 +263,16 @@ Details: experiments/real-gpu/results/session-a2-20261001-0929/README.md. ~$1.12
 - Decision: passive signals = trigger, probe = per-workload score. STOP measurement deep-dives.
 - Refocus: the goal is cost. Next = session B on 2 GPUs: real Kubernetes + NVIDIA DRA driver + GPUFit,
   same training job with vs without GPUFit -> measured job time, GPU-hours, $. Then a cost calculator.
+
+## 2026-10-01 — Session B built and rehearsed (not run)
+Plan: one session, Kubernetes + cost (docs/design/session-b-cost.md). Built: 2-VM Terraform (VM-to-VM traffic
+allowed, internet still SSH-only), multi-VM runner with orchestrate.sh hook, DDP training + decode-style inference,
+deploy/real/gpufit.yaml (agent reads host nvidia-smi via NVIDIA runtime; controller for gpu.nvidia.com), render.sh
+(Indexed Job + headless Service rendezvous), analyze.py ($ per useful GPU-hour), fallback.sh (same measurement
+without Kubernetes).
+Rehearsed on kind (CPU image, example driver): 2-pod training rendezvous works (world_size 2), results printed,
+controller taint -> training Pending + `kubectl gpufit why` explains it, inference still runs; manifests pass
+server-side validation. NOT testable locally: k3s install, NVIDIA DRA driver + CDI, nvidia-smi in the agent pod,
+NCCL between VMs, 3 GB image pulls -> covered by the fallback.
+Versions: k3s v1.37.1+k3s1, dra-driver-nvidia-gpu chart 0.5.0 (DeviceClass gpu.nvidia.com, pool = node name),
+pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime (same torch as sessions A/A2).
