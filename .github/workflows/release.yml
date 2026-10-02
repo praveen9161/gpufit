@@ -49,9 +49,11 @@ jobs:
       - name: Build and push image
         # The Dockerfile only copies the prebuilt binary for TARGETARCH, so no emulation is needed.
         run: |
+          tags=(-t "$IMAGE:$VERSION")
+          [[ "$VERSION" == *-* ]] || tags+=(-t "$IMAGE:latest")   # pre-releases don't move latest
           docker buildx build agent --platform linux/amd64,linux/arm64 \
             --label org.opencontainers.image.source=https://github.com/${{ github.repository }} \
-            -t "$IMAGE:$VERSION" -t "$IMAGE:latest" --push
+            "${tags[@]}" --push
 
       - uses: azure/setup-helm@v4
       - name: Package and push chart
@@ -78,5 +80,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          pre=""; [[ "$VERSION" == *-* ]] && pre=--prerelease   # v0.1.0-rc.1 -> pre-release
           gh release create "$GITHUB_REF_NAME" dist/kubectl-gpufit_* dist/gpufit-*.tgz dist/checksums.txt \
-            --title "GPUFit $GITHUB_REF_NAME" --generate-notes
+            --title "GPUFit $GITHUB_REF_NAME" --generate-notes $pre
