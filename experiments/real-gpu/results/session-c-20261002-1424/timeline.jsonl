@@ -1,0 +1,7 @@
+{"run":"R1","event":"degrade","node":"ip-10-42-1-192","time":1790971272}
+{"run":"R1","event":"repair","node":"ip-10-42-1-192","time":1790972052}
+{"run":"R2","event":"degrade","node":"ip-10-42-1-192","time":1790972391}
+{"run":"R2","event":"pool_inference","node":"ip-10-42-1-192","time":1790972423}
+{"run":"R2","event":"evicted","node":"ip-10-42-1-192","time":1790972459}
+{"run":"R2","event":"repair","node":"ip-10-42-1-192","time":1790972461}
+{"run":"R2","event":"running_again","node":"","time":1790972481}

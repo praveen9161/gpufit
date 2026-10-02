@@ -1,0 +1,15 @@
+agent:
+  window: 30s
+driver: gpu.nvidia.com
+image:
+  pullPolicy: Never
+  repository: gpufit-agent
+  tag: dev
+mode: enforce
+pools:
+  degradeAfter: 20s
+  recoverAfter: 60s
+pricePerGpuHour: "1.006"
+rescue:
+  enabled: true
+  grace: 30s

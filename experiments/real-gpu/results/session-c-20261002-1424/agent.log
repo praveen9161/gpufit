@@ -1,0 +1,16 @@
+[pod/gpufit-agent-dgpxk/agent] 2026/10/02 19:37:45 note: nvidia-smi collector v1 does not measure nvlink or network; both are reported as 1.0
+[pod/gpufit-agent-dgpxk/agent] 2026/10/02 19:37:45 gpufit-agent on node ip-10-42-1-144: collector=nvidia-smi, window=30s, writing gpufit/gpufit-scores key ip-10-42-1-144.json every 5s
+[pod/gpufit-agent-dgpxk/agent] 2026/10/02 19:37:45 gpu-0: training 100, finetune 100, inference 100
+[pod/gpufit-agent-qzfwr/agent] 2026/10/02 19:37:45 note: nvidia-smi collector v1 does not measure nvlink or network; both are reported as 1.0
+[pod/gpufit-agent-qzfwr/agent] 2026/10/02 19:37:45 gpufit-agent on node ip-10-42-1-18: collector=nvidia-smi, window=30s, writing gpufit/gpufit-scores key ip-10-42-1-18.json every 5s
+[pod/gpufit-agent-qzfwr/agent] 2026/10/02 19:37:45 gpu-0: training 100, finetune 100, inference 100
+[pod/gpufit-agent-xsvzb/agent] 2026/10/02 19:37:45 note: nvidia-smi collector v1 does not measure nvlink or network; both are reported as 1.0
+[pod/gpufit-agent-xsvzb/agent] 2026/10/02 19:37:45 gpufit-agent on node ip-10-42-1-192: collector=nvidia-smi, window=30s, writing gpufit/gpufit-scores key ip-10-42-1-192.json every 5s
+[pod/gpufit-agent-xsvzb/agent] 2026/10/02 19:37:45 gpu-0: training 100, finetune 100, inference 100
+[pod/gpufit-agent-xsvzb/agent] 2026/10/02 20:01:15 gpu-0: training 100 -> 50 (weakest link: compute 0.50), finetune 100 -> 78 (weakest: compute 0.50), inference 100 -> 76 (weakest: compute 0.50)
+[pod/gpufit-agent-xsvzb/agent] 2026/10/02 20:14:40 gpu-0: training 50 -> 100, finetune 78 -> 100, inference 76 -> 100
+[pod/gpufit-agent-xsvzb/agent] 2026/10/02 20:19:55 gpu-0: training 100 -> 50 (weakest link: compute 0.50), finetune 100 -> 78 (weakest: compute 0.50), inference 100 -> 76 (weakest: compute 0.50)
+[pod/gpufit-agent-xsvzb/agent] 2026/10/02 20:21:35 gpu-0: training 50 -> 100, finetune 78 -> 100, inference 76 -> 100
+[pod/gpufit-agent-47zxv/agent] 2026/10/02 19:37:45 note: nvidia-smi collector v1 does not measure nvlink or network; both are reported as 1.0
+[pod/gpufit-agent-47zxv/agent] 2026/10/02 19:37:45 gpufit-agent on node ip-10-42-1-150: collector=nvidia-smi, window=30s, writing gpufit/gpufit-scores key ip-10-42-1-150.json every 5s
+[pod/gpufit-agent-47zxv/agent] 2026/10/02 19:37:45 gpu-0: training 100, finetune 100, inference 100

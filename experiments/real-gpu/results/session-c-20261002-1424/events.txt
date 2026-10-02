@@ -1,0 +1,99 @@
+NAMESPACE    LAST SEEN   TYPE      REASON              OBJECT                                    MESSAGE
+gpufit-lab   38m         Normal    Scheduled           pod/train-observe-0-fhzb6                 Successfully assigned gpufit-lab/train-observe-0-fhzb6 to ip-10-42-1-18
+gpufit-lab   19m         Normal    Scheduled           pod/train-rescue-1-jxnqb                  Successfully assigned gpufit-lab/train-rescue-1-jxnqb to ip-10-42-1-192
+gpufit       57m         Normal    Scheduled           pod/gpufit-agent-dgpxk                    Successfully assigned gpufit/gpufit-agent-dgpxk to ip-10-42-1-144
+gpufit       19m         Normal    Scheduled           pod/gpufit-controller-7998975f74-cmfbd    Successfully assigned gpufit/gpufit-controller-7998975f74-cmfbd to ip-10-42-1-18
+gpufit-lab   14m         Normal    Scheduled           pod/train-rescue-1-fzvpp                  Successfully assigned gpufit-lab/train-rescue-1-fzvpp to ip-10-42-1-18
+gpufit       57m         Normal    Scheduled           pod/gpufit-agent-qzfwr                    Successfully assigned gpufit/gpufit-agent-qzfwr to ip-10-42-1-18
+gpufit-lab   14m         Normal    Scheduled           pod/train-rescue-0-t885r                  Successfully assigned gpufit-lab/train-rescue-0-t885r to ip-10-42-1-144
+gpufit       57m         Normal    Scheduled           pod/gpufit-agent-47zxv                    Successfully assigned gpufit/gpufit-agent-47zxv to ip-10-42-1-150
+gpufit       57m         Normal    Scheduled           pod/gpufit-agent-xsvzb                    Successfully assigned gpufit/gpufit-agent-xsvzb to ip-10-42-1-192
+gpufit-lab   19m         Normal    Scheduled           pod/train-rescue-0-4nzw6                  Successfully assigned gpufit-lab/train-rescue-0-4nzw6 to ip-10-42-1-18
+gpufit       57m         Normal    Scheduled           pod/gpufit-controller-5b8c959b6b-zg4dj    Successfully assigned gpufit/gpufit-controller-5b8c959b6b-zg4dj to ip-10-42-1-144
+gpufit-lab   53m         Normal    Scheduled           pod/train-ref-1-z4lpd                     Successfully assigned gpufit-lab/train-ref-1-z4lpd to ip-10-42-1-192
+gpufit-lab   57m         Normal    Scheduled           pod/ckpt-store-6dd8cbcbff-m2tfq           Successfully assigned gpufit-lab/ckpt-store-6dd8cbcbff-m2tfq to ip-10-42-1-144
+gpufit-lab   53m         Normal    Scheduled           pod/train-ref-0-gxsx4                     Successfully assigned gpufit-lab/train-ref-0-gxsx4 to ip-10-42-1-18
+gpufit-lab   38m         Normal    Scheduled           pod/train-observe-1-rqwvx                 Successfully assigned gpufit-lab/train-observe-1-rqwvx to ip-10-42-1-192
+gpufit       57m         Normal    Created             pod/gpufit-agent-qzfwr                    Container created
+gpufit       57m         Normal    Created             pod/gpufit-agent-dgpxk                    Container created
+gpufit       57m         Normal    Pulled              pod/gpufit-agent-qzfwr                    Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit       57m         Normal    Started             pod/gpufit-controller-5b8c959b6b-zg4dj    Container started
+gpufit       57m         Normal    SuccessfulCreate    daemonset/gpufit-agent                    Created pod: gpufit-agent-dgpxk
+gpufit       57m         Normal    SuccessfulCreate    daemonset/gpufit-agent                    Created pod: gpufit-agent-xsvzb
+gpufit       57m         Normal    SuccessfulCreate    daemonset/gpufit-agent                    Created pod: gpufit-agent-47zxv
+gpufit       57m         Normal    Created             pod/gpufit-controller-5b8c959b6b-zg4dj    Container created
+gpufit       57m         Normal    Pulled              pod/gpufit-controller-5b8c959b6b-zg4dj    Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit       57m         Normal    SuccessfulCreate    replicaset/gpufit-controller-5b8c959b6b   Created pod: gpufit-controller-5b8c959b6b-zg4dj
+gpufit       57m         Normal    Created             pod/gpufit-agent-xsvzb                    Container created
+gpufit       57m         Normal    Pulled              pod/gpufit-agent-47zxv                    Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit       57m         Normal    Created             pod/gpufit-agent-47zxv                    Container created
+gpufit       57m         Normal    Pulled              pod/gpufit-agent-xsvzb                    Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit       57m         Normal    Pulled              pod/gpufit-agent-dgpxk                    Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+gpufit       57m         Normal    ScalingReplicaSet   deployment/gpufit-controller              Scaled up replica set gpufit-controller-5b8c959b6b from 0 to 1
+gpufit       57m         Normal    SuccessfulCreate    daemonset/gpufit-agent                    Created pod: gpufit-agent-qzfwr
+gpufit       57m         Normal    Started             pod/gpufit-agent-dgpxk                    Container started
+gpufit       57m         Normal    Started             pod/gpufit-agent-47zxv                    Container started
+gpufit       57m         Normal    Started             pod/gpufit-agent-qzfwr                    Container started
+gpufit       57m         Normal    Started             pod/gpufit-agent-xsvzb                    Container started
+default      57m         Normal    GPUFitPoolChanged   node/ip-10-42-1-18                        observe mode, not applied: pool training (all 1 GPUs training >= 80)
+default      57m         Normal    GPUFitPoolChanged   node/ip-10-42-1-192                       observe mode, not applied: pool training (all 1 GPUs training >= 80)
+default      57m         Normal    GPUFitPoolChanged   node/ip-10-42-1-144                       observe mode, not applied: pool training (all 1 GPUs training >= 80)
+default      57m         Normal    GPUFitPoolChanged   node/ip-10-42-1-150                       observe mode, not applied: pool training (all 1 GPUs training >= 80)
+gpufit-lab   57m         Normal    SuccessfulCreate    replicaset/ckpt-store-6dd8cbcbff          Created pod: ckpt-store-6dd8cbcbff-m2tfq
+gpufit-lab   57m         Normal    ScalingReplicaSet   deployment/ckpt-store                     Scaled up replica set ckpt-store-6dd8cbcbff from 0 to 1
+gpufit-lab   57m         Normal    Created             pod/ckpt-store-6dd8cbcbff-m2tfq           Container created
+gpufit-lab   57m         Normal    Pulled              pod/ckpt-store-6dd8cbcbff-m2tfq           Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   57m         Normal    Started             pod/ckpt-store-6dd8cbcbff-m2tfq           Container started
+gpufit-lab   53m         Normal    Started             pod/train-ref-1-z4lpd                     Container started
+gpufit-lab   53m         Normal    SuccessfulCreate    job/train-ref                             Created pod: train-ref-1-z4lpd
+gpufit-lab   53m         Normal    SuccessfulCreate    job/train-ref                             Created pod: train-ref-0-gxsx4
+gpufit-lab   53m         Normal    Created             pod/train-ref-1-z4lpd                     Container created
+gpufit-lab   53m         Normal    Pulled              pod/train-ref-1-z4lpd                     Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   53m         Normal    Started             pod/train-ref-0-gxsx4                     Container started
+gpufit-lab   53m         Normal    Created             pod/train-ref-0-gxsx4                     Container created
+gpufit-lab   53m         Normal    Pulled              pod/train-ref-0-gxsx4                     Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   38m         Normal    Completed           job/train-ref                             Job completed
+gpufit-lab   38m         Normal    SuccessfulCreate    job/train-observe                         Created pod: train-observe-1-rqwvx
+gpufit-lab   38m         Normal    SuccessfulCreate    job/train-observe                         Created pod: train-observe-0-fhzb6
+gpufit-lab   38m         Normal    Created             pod/train-observe-1-rqwvx                 Container created
+gpufit-lab   38m         Normal    Pulled              pod/train-observe-0-fhzb6                 Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   38m         Normal    Created             pod/train-observe-0-fhzb6                 Container created
+gpufit-lab   38m         Normal    Started             pod/train-observe-0-fhzb6                 Container started
+gpufit-lab   38m         Normal    Pulled              pod/train-observe-1-rqwvx                 Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   38m         Normal    Started             pod/train-observe-1-rqwvx                 Container started
+default      33m         Warning   GPUFitPoolChanged   node/ip-10-42-1-192                       observe mode, not applied: pool -> inference (gpu-0 training 50 < 80)
+gpufit-lab   21m         Normal    Completed           job/train-observe                         Job completed
+default      19m         Normal    GPUFitPoolChanged   node/ip-10-42-1-192                       observe mode, not applied: pool -> training (all 1 GPUs training >= 80)
+gpufit       19m         Normal    Killing             pod/gpufit-controller-5b8c959b6b-zg4dj    Stopping container controller
+gpufit       19m         Normal    SuccessfulCreate    replicaset/gpufit-controller-7998975f74   Created pod: gpufit-controller-7998975f74-cmfbd
+gpufit       19m         Normal    ScalingReplicaSet   deployment/gpufit-controller              Scaled up replica set gpufit-controller-7998975f74 from 0 to 1
+gpufit       19m         Normal    ScalingReplicaSet   deployment/gpufit-controller              Scaled down replica set gpufit-controller-5b8c959b6b from 1 to 0
+gpufit       19m         Normal    SuccessfulDelete    replicaset/gpufit-controller-5b8c959b6b   Deleted pod: gpufit-controller-5b8c959b6b-zg4dj
+default      19m         Normal    GPUFitPoolChanged   node/ip-10-42-1-144                       pool training (all 1 GPUs training >= 80)
+gpufit       19m         Normal    Started             pod/gpufit-controller-7998975f74-cmfbd    Container started
+gpufit       19m         Normal    Created             pod/gpufit-controller-7998975f74-cmfbd    Container created
+gpufit       19m         Normal    Pulled              pod/gpufit-controller-7998975f74-cmfbd    Container image "gpufit-agent:dev" already present on machine and can be accessed by the pod
+default      19m         Normal    GPUFitPoolChanged   node/ip-10-42-1-150                       pool training (all 1 GPUs training >= 80)
+default      19m         Normal    GPUFitPoolChanged   node/ip-10-42-1-192                       pool training (all 1 GPUs training >= 80)
+default      19m         Normal    GPUFitPoolChanged   node/ip-10-42-1-18                        pool training (all 1 GPUs training >= 80)
+gpufit-lab   19m         Normal    SuccessfulCreate    job/train-rescue                          Created pod: train-rescue-0-4nzw6
+gpufit-lab   19m         Normal    SuccessfulCreate    job/train-rescue                          Created pod: train-rescue-1-jxnqb
+gpufit-lab   19m         Normal    Created             pod/train-rescue-0-4nzw6                  Container created
+gpufit-lab   19m         Normal    Created             pod/train-rescue-1-jxnqb                  Container created
+gpufit-lab   19m         Normal    Started             pod/train-rescue-0-4nzw6                  Container started
+gpufit-lab   19m         Normal    Pulled              pod/train-rescue-0-4nzw6                  Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   19m         Normal    Pulled              pod/train-rescue-1-jxnqb                  Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   19m         Normal    Started             pod/train-rescue-1-jxnqb                  Container started
+default      15m         Warning   GPUFitPoolChanged   node/ip-10-42-1-192                       pool -> inference (gpu-0 training 50 < 80)
+gpufit-lab   14m         Normal    Killing             pod/train-rescue-0-4nzw6                  Stopping container train
+gpufit-lab   14m         Normal    Killing             pod/train-rescue-1-jxnqb                  Stopping container train
+gpufit-lab   14m         Normal    Started             pod/train-rescue-1-fzvpp                  Container started
+gpufit-lab   14m         Normal    SuccessfulCreate    job/train-rescue                          Created pod: train-rescue-0-t885r
+gpufit-lab   14m         Normal    SuccessfulCreate    job/train-rescue                          Created pod: train-rescue-1-fzvpp
+gpufit-lab   14m         Normal    Pulled              pod/train-rescue-0-t885r                  Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   14m         Normal    Created             pod/train-rescue-0-t885r                  Container created
+gpufit-lab   14m         Normal    Started             pod/train-rescue-0-t885r                  Container started
+gpufit-lab   14m         Normal    Pulled              pod/train-rescue-1-fzvpp                  Container image "pytorch/pytorch:2.12.1-cuda13.0-cudnn9-runtime" already present on machine and can be accessed by the pod
+gpufit-lab   14m         Normal    Created             pod/train-rescue-1-fzvpp                  Container created
+default      12m         Normal    GPUFitPoolChanged   node/ip-10-42-1-192                       pool -> training (all 1 GPUs training >= 80)
+gpufit-lab   3m6s        Normal    Completed           job/train-rescue                          Job completed

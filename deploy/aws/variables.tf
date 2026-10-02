@@ -27,13 +27,13 @@ variable "availability_zone" {
 }
 
 variable "instance_count" {
-  description = "Number of identical GPU VMs (1 for single-GPU measurements, 2 for the Kubernetes session)."
+  description = "Number of identical GPU VMs (1 for single-GPU measurements, 2-4 for the Kubernetes sessions)."
   type        = number
   default     = 1
 
   validation {
-    condition     = var.instance_count >= 1 && var.instance_count <= 2
-    error_message = "instance_count must be 1 or 2 (the GPU quota fits two 4-vCPU instances)."
+    condition     = var.instance_count >= 1 && var.instance_count <= 4
+    error_message = "instance_count must be 1-4 (the GPU quota is 16 vCPUs: four 4-vCPU instances)."
   }
 }
 

@@ -1,0 +1,12 @@
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+{"event": "start", "resumed_from": 0, "total_steps": 400, "world_size": 2, "time": 1790970112.6405406, "load_s": 0.0}
+{"event": "checkpoint", "step": 50, "elapsed_s": 103.7, "save_s": 2.79, "time": 1790970216.378784}
+{"event": "checkpoint", "step": 100, "elapsed_s": 215.1, "save_s": 10.01, "time": 1790970327.8055284}
+{"event": "checkpoint", "step": 150, "elapsed_s": 327.8, "save_s": 10.0, "time": 1790970440.5316978}
+{"event": "checkpoint", "step": 200, "elapsed_s": 439.5, "save_s": 10.0, "time": 1790970552.233142}
+{"event": "checkpoint", "step": 250, "elapsed_s": 552.7, "save_s": 10.02, "time": 1790970665.4008126}
+{"event": "checkpoint", "step": 300, "elapsed_s": 666.1, "save_s": 10.01, "time": 1790970778.780121}
+{"event": "checkpoint", "step": 350, "elapsed_s": 778.8, "save_s": 10.01, "time": 1790970891.4717662}
+{"event": "checkpoint", "step": 400, "elapsed_s": 890.7, "save_s": 10.01, "time": 1790971003.3837175}
+{"workload": "train_job", "world_size": 2, "device": "NVIDIA A10G", "total_steps": 400, "resumed_from": 0, "steps_this_run": 400, "seconds_this_run": 890.7, "tokens_per_s": 117725.3, "started": 1790970112.6405406, "finished": 1790971003.383852, "torch": "2.12.1+cu130"}

@@ -1,0 +1,3 @@
+{"run":"R0","job":"train-ref","degraded_node":"","wall_s":901,"placement_start":["ip-10-42-1-18","ip-10-42-1-192"],"placement_end":["ip-10-42-1-18","ip-10-42-1-192"]}
+{"run":"R1","job":"train-observe","degraded_node":"ip-10-42-1-192","wall_s":1001,"placement_start":["ip-10-42-1-18","ip-10-42-1-192"],"placement_end":["ip-10-42-1-18","ip-10-42-1-192"]}
+{"run":"R2","job":"train-rescue","degraded_node":"ip-10-42-1-192","wall_s":987,"placement_start":["ip-10-42-1-18","ip-10-42-1-192"],"placement_end":["ip-10-42-1-144","ip-10-42-1-18"]}

@@ -32,7 +32,7 @@ WORK=$(mktemp -d)
 export KUBECONFIG="$WORK/kubeconfig"   # never written into the repo
 TUNNEL_PORT=16443
 cleanup() {
-  [[ -n "${TUNNEL_PID:-}" ]] && kill "$TUNNEL_PID" 2>/dev/null
+  [[ -n "${TUNNEL_PID:-}" ]] && { kill "$TUNNEL_PID" 2>/dev/null || true; }
   rm -rf "$WORK"
 }
 trap cleanup EXIT

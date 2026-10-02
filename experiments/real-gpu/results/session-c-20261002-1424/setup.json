@@ -1,0 +1,6 @@
+{
+  "class": "gpu.nvidia.com",
+  "train_args": "--total-steps 400 --ckpt-every 50",
+  "degrade_at_step": 100,
+  "price_per_gpu_hour": 1.006
+}

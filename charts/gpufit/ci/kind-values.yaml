@@ -12,8 +12,7 @@ pools:
 agent:
   collector: fake
   runtimeClassName: ""
-  nodeSelector:
-    nvidia.com/gpu.present: null   # kind nodes have no such label (null removes the default)
+  gpuNodesOnly: false        # kind nodes have no nvidia.com/gpu.present label
   fakeMetrics: |
     {
       "gpu-0": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},

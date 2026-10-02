@@ -1,0 +1,5 @@
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+{"event": "start", "resumed_from": 0, "total_steps": 400, "world_size": 2, "time": 1790972173.6618786, "load_s": 0.0}
+{"event": "checkpoint", "step": 50, "elapsed_s": 103.8, "save_s": 2.8, "time": 1790972277.5350053}
+{"event": "checkpoint", "step": 100, "elapsed_s": 214.9, "save_s": 10.01, "time": 1790972388.6393268}

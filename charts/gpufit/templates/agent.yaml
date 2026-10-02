@@ -60,7 +60,11 @@ spec:
       {{- if and (eq .Values.agent.collector "nvidia-smi") .Values.agent.runtimeClassName }}
       runtimeClassName: {{ .Values.agent.runtimeClassName }}
       {{- end }}
-      {{- with .Values.agent.nodeSelector }}
+      {{- $sel := deepCopy .Values.agent.nodeSelector }}
+      {{- if .Values.agent.gpuNodesOnly }}
+      {{- $_ := set $sel "nvidia.com/gpu.present" "true" }}
+      {{- end }}
+      {{- with $sel }}
       nodeSelector: {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.agent.tolerations }}

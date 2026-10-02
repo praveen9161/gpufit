@@ -1,0 +1,10 @@
+/usr/local/lib/python3.12/dist-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+{"event": "start", "resumed_from": 100, "total_steps": 400, "world_size": 2, "time": 1790972486.6206682, "load_s": 3.0}
+{"event": "checkpoint", "step": 150, "elapsed_s": 109.2, "save_s": 9.49, "time": 1790972598.8117654}
+{"event": "checkpoint", "step": 200, "elapsed_s": 219.8, "save_s": 9.51, "time": 1790972709.4592218}
+{"event": "checkpoint", "step": 250, "elapsed_s": 330.2, "save_s": 9.5, "time": 1790972819.7823915}
+{"event": "checkpoint", "step": 300, "elapsed_s": 440.6, "save_s": 9.48, "time": 1790972930.176051}
+{"event": "checkpoint", "step": 350, "elapsed_s": 551.1, "save_s": 9.49, "time": 1790973040.722746}
+{"event": "checkpoint", "step": 400, "elapsed_s": 661.3, "save_s": 9.45, "time": 1790973150.9732337}
+{"workload": "train_job", "world_size": 2, "device": "NVIDIA A10G", "total_steps": 400, "resumed_from": 100, "steps_this_run": 300, "seconds_this_run": 661.3, "tokens_per_s": 118913.2, "started": 1790972486.6206682, "finished": 1790973150.9733596, "torch": "2.12.1+cu130"}

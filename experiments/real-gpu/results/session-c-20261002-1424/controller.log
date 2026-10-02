@@ -1,0 +1,12 @@
+2026/10/02 20:15:58 report: continuing totals since 2026-10-02T19:37:44Z
+2026/10/02 20:15:58 metrics on :8080/metrics
+2026/10/02 20:15:58 gpufit-controller: mode=enforce rescue=true (grace 30s) training-min=80 repair-min=50 degrade-after=20s recover-after=1m0s driver=gpu.nvidia.com
+2026/10/02 20:15:58 node ip-10-42-1-144: pool training (all 1 GPUs training >= 80)
+2026/10/02 20:15:58 node ip-10-42-1-150: pool training (all 1 GPUs training >= 80)
+2026/10/02 20:15:58 node ip-10-42-1-18: pool training (all 1 GPUs training >= 80)
+2026/10/02 20:15:58 node ip-10-42-1-192: pool training (all 1 GPUs training >= 80)
+2026/10/02 20:20:23 node ip-10-42-1-192: pool -> inference (gpu-0 training 50 < 80)
+2026/10/02 20:20:23 rescue: gpufit-lab/Job/train-rescue holds ip-10-42-1-192/gpu-0, on a node that left the training pool; moving it after 30s
+2026/10/02 20:20:58 rescue: gpufit-lab/Job/train-rescue moved off ip-10-42-1-192/gpu-0's node (2 pods evicted)
+2026/10/02 20:22:43 node ip-10-42-1-192: pool -> training (all 1 GPUs training >= 80)
+2026/10/02 20:22:43 node ip-10-42-1-192: removed gpufit-ip-10-42-1-192-unfit-training

@@ -139,7 +139,7 @@ def run_job(a, step, net, opt, rank, world, cuda, dev):
     dist.barrier()
     if rank == 0:
         print(json.dumps({"event": "start", "resumed_from": resumed_from, "total_steps": a.total_steps,
-                          "world_size": world, "time": started}), flush=True)
+                          "world_size": world, "time": started, "load_s": round(time.time() - started, 1)}), flush=True)
     t0, done = time.perf_counter(), resumed_from
     while done < a.total_steps:
         step()
@@ -147,11 +147,13 @@ def run_job(a, step, net, opt, rank, world, cuda, dev):
         if done % a.ckpt_every == 0 or done == a.total_steps:
             if cuda:
                 torch.cuda.synchronize()
+            ts = time.perf_counter()
             if rank == 0 and a.ckpt_url:
                 save_checkpoint(a.ckpt_url, net, opt, done)
             dist.barrier()
-            if rank == 0:
-                print(json.dumps({"event": "checkpoint", "step": done, "elapsed_s": round(time.perf_counter() - t0, 1)}), flush=True)
+            if rank == 0:  # save_s: time all ranks waited for the checkpoint (its overhead)
+                print(json.dumps({"event": "checkpoint", "step": done, "elapsed_s": round(time.perf_counter() - t0, 1),
+                                  "save_s": round(time.perf_counter() - ts, 2), "time": time.time()}), flush=True)
     elapsed = time.perf_counter() - t0
     if rank == 0:
         steps = done - resumed_from

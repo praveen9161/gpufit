@@ -1,0 +1,13 @@
+GPUFit savings report   since 2026-10-02 19:37 UTC (36m0s)   mode: observe
+
+  Training GPU-hours                    1.06
+    in jobs holding a degraded GPU      0.43   (40.5%)
+  Estimated waste (stragglers)          0.21 GPU-hours   ~ $0.22 at $1.01/GPU-hour
+
+  Observe mode: this is waste that enforcing GPUFit would keep new training jobs from.
+
+  JOB                           GPUS  SLOWEST GPU           SCORE  DEGRADED FOR  WASTED GPU-h
+  gpufit-lab/Job/train-observe  2     ip-10-42-1-192/gpu-0  50     12m45s        0.21
+
+  Speed is estimated from the training score (score/100). That overstates mild degradation:
+  on a real A10G a GPU scoring 50 still ran training at 0.84 (GPUFit session B).

@@ -41,8 +41,10 @@ agent:
   interval: 5s
   window: ""              # worst value over this long; default 10m for nvidia-smi
   runtimeClassName: nvidia   # "" if nvidia is the default runtime
-  nodeSelector:
-    nvidia.com/gpu.present: "true"
+  # Run only on nodes labelled nvidia.com/gpu.present=true (set by NVIDIA's GPU feature
+  # discovery / GPU operator). false: no such filter (e.g. kind); add your own below.
+  gpuNodesOnly: true
+  nodeSelector: {}
   tolerations: []
   # collector=fake only: if set, the chart creates gpufit-fake-metrics with this JSON,
   # e.g. {"gpu-0": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1}}

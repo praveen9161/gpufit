@@ -328,3 +328,17 @@ Confusing moments:
   wrap it: `echo 'FROM <image>' | docker build --platform linux/arm64 -t <local> -`. A private GHCR image needs
   imagePullSecrets (added to the chart after rc.1). If the image can't be pulled, the uninstall hook can't run:
   `helm uninstall --no-hooks`, then remove taints by hand.
+
+## 2026-10-02 — SESSION C: GPUFit v0.1 on 4x A10G, straggler vs rescue (~$5.16, total ~$8.5)
+Details: experiments/real-gpu/results/session-c-20261002-1424/README.md. Installed with the Helm chart.
+R0 healthy 901 s; R1 one GPU at 150 W, observe: 1001 s (job at 0.87); R2 same, enforce+rescue: 987 s
+(moved -18,-192 -> -144,-18, resumed from step 100). Rescue: pool 32 s, evict +36 s, running +22 s, ~31 steps redone.
+Report estimated 0.214 GPU-h waste for R1 vs 0.056 measured (3.8x high, as in session B).
+Break-even (estimate from measurements): rescue pays off with > ~10 min of work left (demo timers), ~16 min
+with production timers. Confusing moments:
+- I first assumed longer detection timers add their whole duration to the rescue cost. They don't: the
+  job keeps running (degraded) while GPUFit waits, so only the 13% slowdown of that time counts.
+- The paid session started while the rehearsal was still running; it was held at the C2 pause so a bug
+  found by the rehearsal (terminating pods counted as recreated) could be fixed before experiment.sh was
+  sourced. A sourced file is read lazily too: never edit it after it's sourced.
+- Helm `--reuse-values` + a `null` override = empty string, not "delete the key".
