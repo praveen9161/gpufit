@@ -1,0 +1,27 @@
+# GPUFit on the local kind cluster (dra-example-driver, simulated GPUs, fake health).
+#   ./deploy/agent/build.sh
+#   helm install gpufit charts/gpufit -n gpufit --create-namespace -f charts/gpufit/ci/kind-values.yaml
+image:
+  repository: gpufit-agent   # loaded into kind by deploy/agent/build.sh
+  tag: dev
+  pullPolicy: Never
+driver: gpu.example.com
+pools:
+  degradeAfter: 10s          # demo timers (defaults: 5m / 30m)
+  recoverAfter: 30s
+agent:
+  collector: fake
+  runtimeClassName: ""
+  nodeSelector:
+    nvidia.com/gpu.present: null   # kind nodes have no such label (null removes the default)
+  fakeMetrics: |
+    {
+      "gpu-0": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},
+      "gpu-1": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},
+      "gpu-2": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},
+      "gpu-3": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},
+      "gpu-4": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},
+      "gpu-5": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},
+      "gpu-6": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1},
+      "gpu-7": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1}
+    }

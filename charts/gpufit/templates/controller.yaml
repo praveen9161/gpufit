@@ -1,0 +1,180 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpufit-controller
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "gpufit.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gpufit-controller
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "gpufit.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-scores"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-status"]
+  verbs: ["get", "patch"]
+# Uninstall hook (gpufit-cleanup): scale the controller to 0 before removing taints.
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  resourceNames: ["gpufit-controller"]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gpufit-controller
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "gpufit.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: gpufit-controller
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: gpufit-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gpufit-controller
+  labels: {{- include "gpufit.labels" . | nindent 4 }}
+rules:
+# Pools: node label/annotation, DeviceTaintRules (written only in enforce mode).
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "patch"]
+- apiGroups: ["resource.k8s.io"]
+  resources: ["devicetaintrules"]
+  verbs: ["get", "list", "create", "patch", "delete"]
+# Report: which training jobs hold which GPUs (read-only).
+- apiGroups: ["resource.k8s.io"]
+  resources: ["resourceclaims"]
+  verbs: ["list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list"]
+{{- if .Values.rescue.enabled }}
+# Rescue: evict the pods of opted-in training jobs (gpufit.io/rescue=true).
+- apiGroups: [""]
+  resources: ["pods/eviction"]
+  verbs: ["create"]
+{{- end }}
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gpufit-controller
+  labels: {{- include "gpufit.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: gpufit-controller
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: gpufit-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpufit-controller
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "gpufit.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}   # one writer of taints and status at a time
+  selector:
+    matchLabels: {app.kubernetes.io/name: gpufit, app.kubernetes.io/component: controller}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gpufit
+        app.kubernetes.io/component: controller
+    spec:
+      serviceAccountName: gpufit-controller
+      {{- with .Values.controller.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: controller
+        image: {{ include "gpufit.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: ["/gpufit-controller"]
+        args:
+        - --mode={{ .Values.mode }}
+        - --driver={{ .Values.driver }}
+        - --interval={{ .Values.controller.interval }}
+        - --price-per-gpu-hour={{ .Values.pricePerGpuHour }}
+        - --metrics-addr=:{{ .Values.metrics.port }}
+        {{- if .Values.rescue.enabled }}
+        - --rescue
+        - --rescue-grace={{ .Values.rescue.grace }}
+        {{- end }}
+        {{- with .Values.pools.trainingMin }}
+        - --training-min={{ . }}
+        {{- end }}
+        {{- with .Values.pools.repairMin }}
+        - --repair-min={{ . }}
+        {{- end }}
+        {{- with .Values.pools.degradeAfter }}
+        - --degrade-after={{ . }}
+        {{- end }}
+        {{- with .Values.pools.recoverAfter }}
+        - --recover-after={{ . }}
+        {{- end }}
+        env:
+        - name: POD_NAMESPACE
+          valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+        ports:
+        - {name: metrics, containerPort: {{ .Values.metrics.port }}}
+        resources: {{- toYaml .Values.controller.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpufit-controller-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gpufit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+spec:
+  selector: {app.kubernetes.io/name: gpufit, app.kubernetes.io/component: controller}
+  ports:
+  - {name: metrics, port: {{ .Values.metrics.port }}, targetPort: metrics}
+{{- if .Values.metrics.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gpufit-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gpufit.labels" . | nindent 4 }}
+    {{- with .Values.metrics.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels: {app.kubernetes.io/name: gpufit, app.kubernetes.io/component: controller}
+  endpoints:
+  - port: metrics
+    interval: {{ .Values.metrics.serviceMonitor.interval }}
+{{- end }}

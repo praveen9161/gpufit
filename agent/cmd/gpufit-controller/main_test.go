@@ -168,6 +168,27 @@ func TestObserveModeReportsWithoutApplying(t *testing.T) {
 	}
 }
 
+// helm uninstall runs --cleanup: nothing enforce mode applied may survive it.
+func TestCleanupRemovesPoolsAndTaints(t *testing.T) {
+	ctx := context.Background()
+	c, cs := setup(t, map[string]string{"node-a.json": brokenGPU, "node-b.json": healthyNode})
+	c.reconcile(ctx, time.Now())
+	if len(ruleNames(t, cs)) == 0 || pool(t, cs, "node-a") != "inference" {
+		t.Fatalf("enforce did not apply: rules=%v pool=%q", ruleNames(t, cs), pool(t, cs, "node-a"))
+	}
+	if err := cleanupAll(ctx, cs); err != nil {
+		t.Fatal(err)
+	}
+	if got := ruleNames(t, cs); len(got) != 0 {
+		t.Errorf("rules %v remain", got)
+	}
+	for _, n := range []string{"node-a", "node-b"} {
+		if p := pool(t, cs, n); p != "" {
+			t.Errorf("%s still labelled %q", n, p)
+		}
+	}
+}
+
 // A 2-pod training Job holds gpu-0 on node-a and gpu-1 on node-a/node-b's
 // degraded gpu-1; an inference pod on another GPU must not count.
 func TestReportCountsTrainingJobsOnDegradedGPUs(t *testing.T) {

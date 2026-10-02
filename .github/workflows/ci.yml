@@ -39,6 +39,20 @@ jobs:
       - run: terraform init -backend=false -input=false
       - run: terraform validate
 
+  chart:
+    name: Helm chart (charts/gpufit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - run: helm lint charts/gpufit
+      - name: render (defaults, enforce+rescue, fake collector)
+        run: |
+          helm template t charts/gpufit > /dev/null
+          helm template t charts/gpufit --set mode=enforce,rescue.enabled=true,pricePerGpuHour=2 > /dev/null
+          helm template t charts/gpufit -f charts/gpufit/ci/kind-values.yaml > /dev/null
+          ! helm template t charts/gpufit --set mode=bogus > /dev/null 2>&1
+
   scripts:
     name: Shell and Python syntax
     runs-on: ubuntu-latest

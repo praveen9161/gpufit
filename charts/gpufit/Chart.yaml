@@ -1,0 +1,17 @@
+apiVersion: v2
+name: gpufit
+description: >-
+  Workload-specific GPU fitness for Kubernetes DRA. Scores every GPU per workload
+  (training, fine-tuning, inference), keeps degraded GPUs out of synchronous
+  training and keeps them serving inference, and reports the training time lost
+  to degraded GPUs.
+type: application
+# The release workflow sets both from the git tag (v0.1.0 -> 0.1.0).
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.34.0-0"   # resource.k8s.io/v1 (DRA GA)
+home: https://github.com/praveen9161/gpufit
+sources: [https://github.com/praveen9161/gpufit]
+keywords: [gpu, dra, dynamic-resource-allocation, scheduling, nvidia]
+annotations:
+  licenses: Apache-2.0

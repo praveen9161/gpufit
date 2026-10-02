@@ -310,3 +310,15 @@ Confusing moments:
 - The guided `run` helper uses eval: an argument like '.event=="checkpoint"' loses its quotes. Pass the whole
   command as one quoted string.
 - Pools are per node, so "moved off gpu-0" in the log meant the job's first GPU on the node, not the bad GPU (gpu-5).
+
+## 2026-10-02 — v0.1 step 4: Helm chart (charts/gpufit) + release workflow
+`helm install gpufit charts/gpufit -n gpufit --create-namespace -f charts/gpufit/ci/kind-values.yaml` on kind:
+observe -> status says "inference (would apply)", no taints; `helm upgrade --reuse-values --set mode=enforce,rescue.enabled=true`
+-> taint + label, pods/eviction RBAC added, metrics gpufit_mode_enforce 1.
+Confusing moments:
+- Helm merges maps: `nodeSelector: {}` in a values file does NOT remove the default nvidia.com/gpu.present
+  selector (the agent would never schedule on kind). Set the key to null.
+- `helm uninstall` left the taint and pool label behind: training would avoid those GPUs forever. Added a
+  pre-delete hook Job running `gpufit-controller --cleanup`. First try still failed: the controller was still
+  running and re-applied the taint 1s after cleanup. The hook now scales the controller to 0 and waits first.
+- `--set-string` can't carry JSON with commas; fake metrics go in a values file.

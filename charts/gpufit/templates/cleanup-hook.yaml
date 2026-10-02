@@ -1,0 +1,43 @@
+# Before `helm uninstall` deletes anything (the service account and RBAC still
+# exist): remove the taints and pool labels enforce mode applied, so no node is
+# left out of training after GPUFit is gone.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpufit-cleanup
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "gpufit.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gpufit
+        app.kubernetes.io/component: cleanup
+    spec:
+      serviceAccountName: gpufit-controller
+      restartPolicy: Never
+      {{- with .Values.controller.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: cleanup
+        image: {{ include "gpufit.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        # Stop the controller first, or it re-applies what cleanup removes.
+        command: ["/gpufit-controller", "--cleanup", "--stop-deployment=gpufit-controller"]
+        env:
+        - name: POD_NAMESPACE
+          valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+        resources: {{- toYaml .Values.controller.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities: {drop: ["ALL"]}

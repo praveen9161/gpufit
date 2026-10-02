@@ -35,7 +35,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	resourcev1 "k8s.io/api/resource/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	applyresourcev1 "k8s.io/client-go/applyconfigurations/resource/v1"
 	"k8s.io/client-go/kubernetes"
@@ -108,6 +110,8 @@ func main() {
 	metricsAddr := flag.String("metrics-addr", ":8080", "address for Prometheus /metrics (empty disables)")
 	flag.BoolVar(&c.rescue, "rescue", false, "enforce mode: restart opted-in training jobs (pod label gpufit.io/rescue=true) whose GPU left the training pool")
 	flag.DurationVar(&c.rescueGrace, "rescue-grace", 2*time.Minute, "how long a job must sit on a degraded GPU before it's moved")
+	cleanup := flag.Bool("cleanup", false, "remove all pools and taints this controller applied, then exit (helm uninstall runs it)")
+	stopDeploy := flag.String("stop-deployment", "", "with --cleanup: first scale this controller Deployment (in --namespace) to 0 and wait, so it can't re-apply taints")
 	flag.Parse()
 	if c.mode != modeObserve && c.mode != modeEnforce {
 		log.Fatalf("--mode must be %s or %s, got %q", modeObserve, modeEnforce, c.mode)
@@ -116,6 +120,17 @@ func main() {
 	client, err := kubeClient()
 	if err != nil {
 		log.Fatal(err)
+	}
+	if *cleanup {
+		if *stopDeploy != "" {
+			if err := stopController(context.Background(), client, c.namespace, *stopDeploy, 90*time.Second); err != nil {
+				log.Fatal(err)
+			}
+		}
+		if err := cleanupAll(context.Background(), client); err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 	c.client, c.tracker, c.trainMin = client, pools.NewTracker(cfg), cfg.TrainingMin
 	c.report = c.loadReport(context.Background(), time.Now())
@@ -425,6 +440,67 @@ func (c *controller) apply(ctx context.Context, node string, d pools.Decision) e
 
 	// 3. Remove our rules for this node that are no longer wanted.
 	return c.removeRules(ctx, node, want)
+}
+
+// stopController scales the controller Deployment to 0 and waits until its pods
+// are gone; a controller still running would re-apply what cleanup removes.
+func stopController(ctx context.Context, client kubernetes.Interface, ns, name string, timeout time.Duration) error {
+	d, err := client.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("get deployment %s: %w", name, err)
+	}
+	if _, err := client.AppsV1().Deployments(ns).Patch(ctx, name, types.MergePatchType,
+		[]byte(`{"spec":{"replicas":0}}`), metav1.PatchOptions{}); err != nil {
+		return fmt.Errorf("scale %s to 0: %w", name, err)
+	}
+	selector := metav1.FormatLabelSelector(d.Spec.Selector)
+	deadline := time.Now().Add(timeout)
+	for {
+		pods, err := client.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{LabelSelector: selector})
+		if err != nil {
+			return fmt.Errorf("list controller pods: %w", err)
+		}
+		if len(pods.Items) == 0 {
+			log.Printf("cleanup: controller %s/%s stopped", ns, name)
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("controller %s/%s still has %d pods after %s", ns, name, len(pods.Items), timeout)
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+// cleanupAll removes everything enforce mode applies: this controller's
+// DeviceTaintRules and the pool label/annotation on every node. Without it,
+// uninstalling GPUFit would leave degraded nodes out of training for good.
+func cleanupAll(ctx context.Context, client kubernetes.Interface) error {
+	rules, err := client.ResourceV1().DeviceTaintRules().List(ctx, metav1.ListOptions{LabelSelector: managedBy + "=" + manager})
+	if err != nil {
+		return fmt.Errorf("list rules: %w", err)
+	}
+	for _, r := range rules.Items {
+		if err := client.ResourceV1().DeviceTaintRules().Delete(ctx, r.Name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("delete %s: %w", r.Name, err)
+		}
+		log.Printf("cleanup: removed %s", r.Name)
+	}
+	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: poolLabel})
+	if err != nil {
+		return fmt.Errorf("list nodes: %w", err)
+	}
+	for _, n := range nodes.Items {
+		// An empty apply with our field manager drops only the fields we own.
+		if _, err := client.CoreV1().Nodes().Apply(ctx, applycorev1.Node(n.Name),
+			metav1.ApplyOptions{FieldManager: manager, Force: true}); err != nil {
+			return fmt.Errorf("unlabel node %s: %w", n.Name, err)
+		}
+		log.Printf("cleanup: removed pool label from node %s", n.Name)
+	}
+	return nil
 }
 
 // removeRules deletes this controller's rules for the node except those in keep.

@@ -1,0 +1,21 @@
+GPUFit {{ .Chart.AppVersion }} is running in namespace {{ .Release.Namespace }}, mode: {{ .Values.mode }}.
+
+  kubectl gpufit status -n {{ .Release.Namespace }}
+      GPUs, scores per workload, pools, what GPUFit does or would do
+  kubectl gpufit report -n {{ .Release.Namespace }}
+      training time on degraded GPUs, estimated waste
+  kubectl gpufit why <pod> -n <namespace>
+      why a GPU pod is Pending
+
+{{- if eq .Values.mode "observe" }}
+
+Observe mode changes nothing. When the report looks right, let GPUFit act:
+  helm upgrade {{ .Release.Name }} <chart> -n {{ .Release.Namespace }} --reuse-values --set mode=enforce
+{{- end }}
+{{- if and .Values.rescue.enabled (ne .Values.mode "enforce") }}
+
+NOTE: rescue.enabled has no effect in observe mode (set mode=enforce).
+{{- end }}
+
+Training jobs should label pods or claims gpufit.io/workload=training; unlabelled GPU work counts as inference.
+kubectl-gpufit: https://github.com/praveen9161/gpufit/releases

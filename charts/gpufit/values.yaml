@@ -1,0 +1,65 @@
+# GPUFit: one agent per GPU node (scores its GPUs) + one controller (pools, taints,
+# report, metrics). Try it in observe mode first; it changes nothing.
+
+image:
+  repository: ghcr.io/praveen9161/gpufit
+  tag: ""                 # default: the chart's appVersion
+  pullPolicy: IfNotPresent
+
+# observe: score, decide and report what it WOULD do; change nothing (default).
+# enforce: apply it: a node with a GPU unfit for training moves to the inference pool
+#          (DeviceTaintRule gpufit.io/unfit-training), a broken GPU gets needs-repair.
+mode: observe
+
+# The DRA driver whose devices GPUFit taints (NVIDIA's DRA driver: gpu.nvidia.com).
+driver: gpu.nvidia.com
+
+# GPU price for `kubectl gpufit report` ($ per GPU-hour). 0 = report GPU-hours only.
+pricePerGpuHour: 0
+
+# Move running training jobs off degraded GPUs (enforce mode only). Only jobs whose
+# pods are labelled gpufit.io/rescue=true; their pods are evicted after `grace`, so
+# the job must checkpoint and resume, and its Job/controller must recreate evicted
+# pods (e.g. a Job podFailurePolicy that ignores DisruptionTarget).
+rescue:
+  enabled: false
+  grace: 2m
+
+# Empty = the controller's defaults (shown).
+pools:
+  trainingMin: ""         # 80: a node leaves the training pool if any GPU's training score is below this
+  repairMin: ""           # 50: a GPU needs repair if its inference score is below this
+  degradeAfter: ""        # 5m: how long a worse state must hold before it's applied
+  recoverAfter: ""        # 30m: how long a better state must hold before it's applied
+
+agent:
+  # nvidia-smi: the host's nvidia-smi, injected by the NVIDIA container runtime.
+  # fake: health ratios from ConfigMap gpufit-fake-metrics (demos, kind).
+  collector: nvidia-smi
+  interval: 5s
+  window: ""              # worst value over this long; default 10m for nvidia-smi
+  runtimeClassName: nvidia   # "" if nvidia is the default runtime
+  nodeSelector:
+    nvidia.com/gpu.present: "true"
+  tolerations: []
+  # collector=fake only: if set, the chart creates gpufit-fake-metrics with this JSON,
+  # e.g. {"gpu-0": {"compute": 1, "memory": 1, "nvlink": 1, "network": 1, "thermal": 1}}
+  fakeMetrics: ""
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 128Mi}
+
+controller:
+  interval: 5s
+  nodeSelector: {}
+  tolerations: []
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 128Mi}
+
+metrics:
+  port: 8080
+  serviceMonitor:
+    enabled: false        # needs the Prometheus Operator CRDs
+    interval: 30s
+    labels: {}
