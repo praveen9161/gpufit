@@ -68,6 +68,10 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["list"]
+# Rescue (only with --rescue, only opted-in jobs): move pods via the eviction API.
+- apiGroups: [""]
+  resources: ["pods/eviction"]
+  verbs: ["create"]
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["create"]
@@ -108,7 +112,8 @@ spec:
         command: ["/gpufit-controller"]
         ports: [{name: metrics, containerPort: 8080}]
         # enforce: the kind demos expect pools and taints to be applied (default is observe).
-        args: ["--mode=enforce", "--degrade-after=10s", "--recover-after=30s", "--interval=5s"]
+        # --rescue only touches pods labelled gpufit.io/rescue=true (experiments/rescue).
+        args: ["--mode=enforce", "--rescue", "--rescue-grace=20s", "--degrade-after=10s", "--recover-after=30s", "--interval=5s"]
         env:
         - name: POD_NAMESPACE
           valueFrom:

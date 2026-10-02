@@ -42,7 +42,7 @@ EOF
 # The benchmark scripts, mounted into every pod.
 render_workloads_configmap() {
   kubectl create configmap workloads -n "$NS_LAB" --dry-run=client -o yaml \
-    --from-file="$WORKLOADS_DIR/train_ddp.py" --from-file="$WORKLOADS_DIR/infer.py"
+    --from-file="$WORKLOADS_DIR/train_ddp.py" --from-file="$WORKLOADS_DIR/infer.py" --from-file="$WORKLOADS_DIR/ckpt_store.py"
 }
 
 # render_train <name> <gpus> <image> [train_ddp.py args...]
@@ -125,4 +125,48 @@ EOF
 # The JSON result line a finished job printed (pod 0 for training).
 job_result() {
   kubectl logs -n "$NS_LAB" "job/$1" 2>/dev/null | grep '^{' | tail -1
+}
+
+# ---- rescue experiments (v0.1 step 3) ----------------------------------------------
+
+# render_ckpt_store <image>: the tiny checkpoint store (ckpt_store.py) + Service ckpt-store:8000.
+render_ckpt_store() {
+  local image=$1
+  cat <<EOT
+apiVersion: v1
+kind: Service
+metadata: {name: ckpt-store, namespace: $NS_LAB}
+spec:
+  selector: {app: ckpt-store}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: ckpt-store, namespace: $NS_LAB}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: ckpt-store}}
+  template:
+    metadata: {labels: {app: ckpt-store}}
+    spec:
+      containers:
+      - name: store
+        image: $image
+        command: ["python", "/workloads/ckpt_store.py", "/data"]
+        ports: [{containerPort: 8000}]
+        volumeMounts: [{name: workloads, mountPath: /workloads}, {name: data, mountPath: /data}]
+      volumes: [{name: workloads, configMap: {name: workloads}}, {name: data, emptyDir: {}}]
+EOT
+}
+
+# render_train_job <name> <gpus> <image> [train_ddp.py args...]
+# Like render_train, but a resumable job GPUFit may rescue: pods labelled
+# gpufit.io/workload=training and gpufit.io/rescue=true, checkpoints to the
+# store, and evictions don't count as failures (podFailurePolicy), so the Job
+# recreates evicted pods, which resume from the last checkpoint.
+render_train_job() {
+  local name=$1 n=$2 image=$3; shift 3
+  render_train "$name" "$n" "$image" --ckpt-url "http://ckpt-store:8000/$name.pt" "$@" |
+    sed -e "s|    metadata: {labels: {app: gpufit-train, run: $name}}|    metadata: {labels: {app: gpufit-train, run: $name, gpufit.io/workload: training, gpufit.io/rescue: \"true\"}}|" \
+        -e "s|  backoffLimit: 0|  backoffLimit: 0\n  podFailurePolicy:\n    rules:\n    - action: Ignore\n      onPodConditions: [{type: DisruptionTarget}]|"
 }

@@ -294,3 +294,19 @@ stragglers x job GPUs x (1 - training speed); lost with GPUFit = stragglers x (1
 swaps with a healthy one from the inference side). Scenarios from sessions A2/B, each value tagged measured or
 estimate; degraded% is the user's own number (no public data). Default example (1024 GPUs, 2%, 60%, 8-GPU jobs,
 session B speeds, $2/h, 85% busy): ~15.5 GPU-h/h recovered, ~$231k/yr, ~1.5% of fleet time. Example inputs, not a claim.
+
+## 2026-10-02 — v0.1 step 3: rescue running training jobs (experiments/rescue/, kind, CPU)
+Controller `--rescue --rescue-grace`: an opted-in job (pod label gpufit.io/rescue=true) holding a GPU on a node
+that left the training pool for longer than the grace period gets its pods evicted (Eviction API). The Job's
+podFailurePolicy ignores DisruptionTarget, so the pods are recreated; train_ddp.py job mode resumes from the
+last checkpoint (ckpt_store.py, a tiny HTTP store standing in for S3/NFS).
+Rehearsal (2-pod DDP, 600 steps, checkpoint every 20): degraded -> inference pool ~17s, evicted 25s later
+(20s grace + 5s interval), pods Pending (one GPU node), repaired -> resumed_from 120, finished 600 steps.
+Confusing moments:
+- Replacement pods appear only ~20s after the eviction: with a podFailurePolicy the Job's podReplacementPolicy
+  defaults to Failed (waits until the old pod is fully gone). A script that checked after 5s saw no pods.
+- Evicted pods are Terminating for a while and still hold their claims; the controller must skip terminating
+  pods or it counts the job again (double eviction, double-counted report).
+- The guided `run` helper uses eval: an argument like '.event=="checkpoint"' loses its quotes. Pass the whole
+  command as one quoted string.
+- Pools are per node, so "moved off gpu-0" in the log meant the job's first GPU on the node, not the bad GPU (gpu-5).

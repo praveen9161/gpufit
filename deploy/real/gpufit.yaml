@@ -112,6 +112,10 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["list"]
+# Rescue (only with --rescue, only opted-in jobs): move pods via the eviction API.
+- apiGroups: [""]
+  resources: ["pods/eviction"]
+  verbs: ["create"]
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["create"]

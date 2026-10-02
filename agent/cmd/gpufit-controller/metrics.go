@@ -25,7 +25,14 @@ var (
 	mWasteHours  = gauge("gpufit_report_estimated_wasted_gpu_hours", "Estimated GPU-hours lost to stragglers (pessimistic, from scores).")
 	mWasteDollar = gauge("gpufit_report_estimated_wasted_dollars", "Estimated waste in dollars at --price-per-gpu-hour.")
 	mSince       = gauge("gpufit_report_start_timestamp_seconds", "When the report's totals started (Unix time).")
+	mRescues     = counter("gpufit_rescues_total", "Training jobs moved off degraded GPUs by this controller process.")
 )
+
+func counter(name, help string) prometheus.Counter {
+	c := prometheus.NewCounter(prometheus.CounterOpts{Name: name, Help: help})
+	registry.MustRegister(c)
+	return c
+}
 
 func gauge(name, help string) prometheus.Gauge {
 	g := prometheus.NewGauge(prometheus.GaugeOpts{Name: name, Help: help})

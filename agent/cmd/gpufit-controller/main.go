@@ -33,6 +33,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	resourcev1 "k8s.io/api/resource/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applycorev1 "k8s.io/client-go/applyconfigurations/core/v1"
@@ -56,6 +57,7 @@ const (
 	needsRepair   = "gpufit.io/needs-repair"
 
 	workloadLabel = "gpufit.io/workload"
+	rescueLabel   = "gpufit.io/rescue"
 
 	modeObserve = status.Observe
 	modeEnforce = status.Enforce
@@ -75,6 +77,18 @@ type controller struct {
 	lastTick time.Time
 	price    float64
 	trainMin int
+
+	// Rescue: move opted-in training jobs off GPUs that left the training pool.
+	rescue      bool
+	rescueGrace time.Duration
+	degradedAt  map[string]time.Time // job key -> when it was first seen on a degraded GPU
+}
+
+// trainingJob is a training job's GPUs plus what's needed to move it.
+type trainingJob struct {
+	report.Job
+	Pods   []*corev1.Pod
+	Rescue bool // pods opted in with gpufit.io/rescue=true
 }
 
 func main() {
@@ -92,6 +106,8 @@ func main() {
 	interval := flag.Duration("interval", 5*time.Second, "how often to reconcile")
 	flag.Float64Var(&c.price, "price-per-gpu-hour", 0, "GPU price for the savings report ($); 0 = report GPU-hours only")
 	metricsAddr := flag.String("metrics-addr", ":8080", "address for Prometheus /metrics (empty disables)")
+	flag.BoolVar(&c.rescue, "rescue", false, "enforce mode: restart opted-in training jobs (pod label gpufit.io/rescue=true) whose GPU left the training pool")
+	flag.DurationVar(&c.rescueGrace, "rescue-grace", 2*time.Minute, "how long a job must sit on a degraded GPU before it's moved")
 	flag.Parse()
 	if c.mode != modeObserve && c.mode != modeEnforce {
 		log.Fatalf("--mode must be %s or %s, got %q", modeObserve, modeEnforce, c.mode)
@@ -107,8 +123,8 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	log.Printf("gpufit-controller: mode=%s training-min=%d repair-min=%d degrade-after=%s recover-after=%s driver=%s",
-		c.mode, cfg.TrainingMin, cfg.RepairMin, cfg.DegradeAfter, cfg.RecoverAfter, c.driver)
+	log.Printf("gpufit-controller: mode=%s rescue=%t (grace %s) training-min=%d repair-min=%d degrade-after=%s recover-after=%s driver=%s",
+		c.mode, c.rescue, c.rescueGrace, cfg.TrainingMin, cfg.RepairMin, cfg.DegradeAfter, cfg.RecoverAfter, c.driver)
 
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()
@@ -158,7 +174,14 @@ func (c *controller) reconcile(ctx context.Context, now time.Time) error {
 		}
 		st.Nodes[node] = status.Node{Pool: d.Pool, Reason: d.PoolReason, Repair: d.Repair, Applied: c.mode == modeEnforce, Scores: scores}
 	}
-	c.updateReport(ctx, now, st.Nodes)
+	jobs, err := c.trainingJobs(ctx)
+	if err != nil {
+		log.Printf("WARN: training jobs: %v", err)
+	}
+	c.updateReport(now, st.Nodes, jobs)
+	if c.mode == modeEnforce && c.rescue {
+		c.rescueJobs(ctx, now, st.Nodes, jobs)
+	}
 	st.Report = c.report
 	updateMetrics(st)
 	return c.writeStatus(ctx, st)
@@ -180,7 +203,7 @@ func (c *controller) loadReport(ctx context.Context, now time.Time) *report.Summ
 
 // updateReport accounts the time since the last reconcile to the training jobs
 // that hold GPUs right now. Gaps (controller down) are not counted.
-func (c *controller) updateReport(ctx context.Context, now time.Time, nodes map[string]status.Node) {
+func (c *controller) updateReport(now time.Time, nodes map[string]status.Node, jobs []trainingJob) {
 	if c.report == nil {
 		c.report = &report.Summary{Since: now.UTC()}
 	}
@@ -189,22 +212,79 @@ func (c *controller) updateReport(ctx context.Context, now time.Time, nodes map[
 	if dt <= 0 || dt > 2*time.Minute {
 		return // first tick, or a gap we can't vouch for
 	}
-	jobs, err := c.trainingJobs(ctx)
-	if err != nil {
-		log.Printf("WARN: report: %v", err)
-		return
-	}
 	score := func(node, gpu string) (int, bool) {
 		sc, ok := nodes[node].Scores[gpu]["training"]
 		return sc, ok
 	}
-	c.report.Add(now.UTC(), dt, jobs, score, c.trainMin)
+	plain := make([]report.Job, 0, len(jobs))
+	for _, j := range jobs {
+		plain = append(plain, j.Job)
+	}
+	c.report.Add(now.UTC(), dt, plain, score, c.trainMin)
+}
+
+// rescueJobs evicts every pod of an opted-in training job that has held a GPU
+// outside the training pool for longer than the grace period. The Job
+// recreates the pods; the device taint keeps them off the degraded GPU, and
+// the job resumes from its own checkpoint. Eviction (not delete) respects
+// PodDisruptionBudgets and marks the pods DisruptionTarget, which a Job's
+// podFailurePolicy can ignore so the move doesn't count as a failure.
+func (c *controller) rescueJobs(ctx context.Context, now time.Time, nodes map[string]status.Node, jobs []trainingJob) {
+	if c.degradedAt == nil {
+		c.degradedAt = map[string]time.Time{}
+	}
+	seen := map[string]bool{}
+	for _, j := range jobs {
+		if !j.Rescue {
+			continue
+		}
+		from := ""
+		for _, d := range j.Devices {
+			if n, ok := nodes[d.Node]; ok && n.Applied && n.Pool != pools.Training {
+				from = d.Node + "/" + d.Name
+				break
+			}
+		}
+		if from == "" {
+			continue
+		}
+		seen[j.Key] = true
+		first, ok := c.degradedAt[j.Key]
+		if !ok {
+			c.degradedAt[j.Key] = now
+			log.Printf("rescue: %s holds %s, on a node that left the training pool; moving it after %s", j.Key, from, c.rescueGrace)
+			continue
+		}
+		if now.Sub(first) < c.rescueGrace {
+			continue
+		}
+		evicted := 0
+		for _, p := range j.Pods {
+			err := c.client.CoreV1().Pods(p.Namespace).EvictV1(ctx, &policyv1.Eviction{
+				ObjectMeta: metav1.ObjectMeta{Name: p.Name, Namespace: p.Namespace},
+			})
+			if err != nil {
+				log.Printf("ERROR: rescue: evict %s/%s: %v", p.Namespace, p.Name, err)
+				continue
+			}
+			evicted++
+		}
+		log.Printf("rescue: %s moved off %s's node (%d pods evicted)", j.Key, from, evicted)
+		c.report.AddRescue(report.Rescue{Job: j.Key, From: from, Pods: evicted, Time: now.UTC()})
+		mRescues.Inc()
+		delete(c.degradedAt, j.Key)
+	}
+	for k := range c.degradedAt {
+		if !seen[k] {
+			delete(c.degradedAt, k) // recovered or finished before the grace period ran out
+		}
+	}
 }
 
 // trainingJobs groups the GPUs held by training pods by the job that owns the
 // pods. A claim is training work if it, or the pod using it, is labelled
 // gpufit.io/workload=training (gpufit-claim sets it on claims).
-func (c *controller) trainingJobs(ctx context.Context) ([]report.Job, error) {
+func (c *controller) trainingJobs(ctx context.Context) ([]trainingJob, error) {
 	claims, err := c.client.ResourceV1().ResourceClaims("").List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("list claims: %w", err)
@@ -218,12 +298,15 @@ func (c *controller) trainingJobs(ctx context.Context) ([]report.Job, error) {
 		p := &pods.Items[i]
 		podByName[p.Namespace+"/"+p.Name] = p
 	}
-	jobs := map[string]*report.Job{}
+	jobs := map[string]*trainingJob{}
 	for _, cl := range claims.Items {
 		if cl.Status.Allocation == nil || len(cl.Status.ReservedFor) == 0 {
 			continue
 		}
 		pod := podByName[cl.Namespace+"/"+cl.Status.ReservedFor[0].Name]
+		if pod != nil && (pod.DeletionTimestamp != nil || pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed) {
+			continue // terminating (e.g. just rescued) or finished: no longer training here
+		}
 		workload := cl.Labels[workloadLabel]
 		if workload == "" && pod != nil {
 			workload = pod.Labels[workloadLabel]
@@ -240,8 +323,14 @@ func (c *controller) trainingJobs(ctx context.Context) ([]report.Job, error) {
 		}
 		j, ok := jobs[key]
 		if !ok {
-			j = &report.Job{Key: key}
+			j = &trainingJob{Job: report.Job{Key: key}}
 			jobs[key] = j
+		}
+		if pod != nil && !containsPod(j.Pods, pod) {
+			j.Pods = append(j.Pods, pod)
+			if pod.Labels[rescueLabel] == "true" {
+				j.Rescue = true
+			}
 		}
 		for _, res := range cl.Status.Allocation.Devices.Results {
 			if res.Driver == c.driver {
@@ -249,11 +338,20 @@ func (c *controller) trainingJobs(ctx context.Context) ([]report.Job, error) {
 			}
 		}
 	}
-	out := make([]report.Job, 0, len(jobs))
+	out := make([]trainingJob, 0, len(jobs))
 	for _, j := range jobs {
 		out = append(out, *j)
 	}
 	return out, nil
+}
+
+func containsPod(pods []*corev1.Pod, p *corev1.Pod) bool {
+	for _, q := range pods {
+		if q.Namespace == p.Namespace && q.Name == p.Name {
+			return true
+		}
+	}
+	return false
 }
 
 // observeOnly reports what enforce mode would do and removes anything this

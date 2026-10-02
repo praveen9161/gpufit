@@ -42,6 +42,16 @@ func (s *Summary) Render(w io.Writer, now time.Time, mode string) {
 		}
 		tw.Flush()
 	}
+	if len(s.Rescues) > 0 {
+		fmt.Fprintf(w, "\n  Rescued training jobs (moved off degraded GPUs): %d\n", len(s.Rescues))
+		tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(tw, "  TIME\tJOB\tFROM GPU\tPODS")
+		for i := len(s.Rescues) - 1; i >= 0 && i >= len(s.Rescues)-10; i-- {
+			r := s.Rescues[i]
+			fmt.Fprintf(tw, "  %s\t%s\t%s\t%d\n", r.Time.UTC().Format("15:04:05"), r.Job, r.From, r.Pods)
+		}
+		tw.Flush()
+	}
 	fmt.Fprintln(w, "\n  Speed is estimated from the training score (score/100). That overstates mild degradation:")
 	fmt.Fprintln(w, "  on a real A10G a GPU scoring 50 still ran training at 0.84 (GPUFit session B).")
 }

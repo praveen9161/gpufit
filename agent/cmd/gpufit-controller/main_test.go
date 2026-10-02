@@ -8,8 +8,11 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	resourcev1 "k8s.io/api/resource/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/praveen9161/gpufit/agent/internal/pools"
@@ -214,3 +217,55 @@ func TestReportCountsTrainingJobsOnDegradedGPUs(t *testing.T) {
 func ptrTrue() *bool { b := true; return &b }
 
 func approx(a, b float64) bool { d := a - b; return d < 1e-9 && d > -1e-9 }
+
+// Rescue: an opted-in training job on a node that left the training pool is
+// evicted (all its pods) only after the grace period; a job that didn't opt in
+// is never touched.
+func TestRescueAfterGraceOnlyForOptedInJobs(t *testing.T) {
+	ctx, t0 := context.Background(), time.Now()
+	c, cs := setup(t, map[string]string{"node-a.json": healthyNode, "node-b.json": brokenGPU})
+	c.rescue, c.rescueGrace = true, time.Minute
+	mk := func(job, pod, node, gpu string, optIn bool) {
+		labels := map[string]string{}
+		if optIn {
+			labels["gpufit.io/rescue"] = "true"
+		}
+		cs.CoreV1().Pods("lab").Create(ctx, &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Namespace: "lab", Name: pod, Labels: labels,
+			OwnerReferences: []metav1.OwnerReference{{APIVersion: "batch/v1", Kind: "Job", Name: job, UID: k8stypes.UID("u-" + job), Controller: ptrTrue()}}}}, metav1.CreateOptions{})
+		cs.ResourceV1().ResourceClaims("lab").Create(ctx, &resourcev1.ResourceClaim{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "lab", Name: pod + "-gpu", Labels: map[string]string{"gpufit.io/workload": "training"}},
+			Status: resourcev1.ResourceClaimStatus{
+				Allocation: &resourcev1.AllocationResult{Devices: resourcev1.DeviceAllocationResult{Results: []resourcev1.DeviceRequestAllocationResult{
+					{Request: "gpu", Driver: "gpu.example.com", Pool: node, Device: gpu}}}},
+				ReservedFor: []resourcev1.ResourceClaimConsumerReference{{Resource: "pods", Name: pod}},
+			}}, metav1.CreateOptions{})
+	}
+	mk("moved", "moved-0", "node-a", "gpu-0", true)
+	mk("moved", "moved-1", "node-b", "gpu-0", true) // node-b leaves the training pool (its gpu-1 is broken)
+	mk("stays", "stays-0", "node-b", "gpu-1", false)
+
+	evictions := func() []string {
+		var out []string
+		for _, a := range cs.Actions() {
+			if a.GetVerb() == "create" && a.GetResource().Resource == "pods" && a.GetSubresource() == "eviction" {
+				out = append(out, a.(interface{ GetObject() runtime.Object }).GetObject().(*policyv1.Eviction).Name)
+			}
+		}
+		return out
+	}
+	c.reconcile(ctx, t0)                     // node-b -> inference pool, job first seen
+	c.reconcile(ctx, t0.Add(30*time.Second)) // within grace: nothing
+	if got := evictions(); len(got) != 0 {
+		t.Fatalf("evicted during grace period: %v", got)
+	}
+	c.reconcile(ctx, t0.Add(70*time.Second)) // grace over: move the opted-in job, all its pods
+	got := evictions()
+	sort.Strings(got)
+	if len(got) != 2 || got[0] != "moved-0" || got[1] != "moved-1" {
+		t.Fatalf("evictions = %v, want moved-0 and moved-1 only", got)
+	}
+	r := readStatus(t, cs).Report
+	if len(r.Rescues) != 1 || r.Rescues[0].Job != "lab/Job/moved" || r.Rescues[0].From != "node-b/gpu-0" || r.Rescues[0].Pods != 2 {
+		t.Errorf("rescues = %+v", r.Rescues)
+	}
+}

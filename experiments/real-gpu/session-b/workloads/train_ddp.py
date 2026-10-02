@@ -10,11 +10,20 @@ compressed to fp16, so GPU work dominates network time between the two VMs.
 Every rank runs the SAME number of steps (a time-based loop could leave ranks
 waiting on each other forever), so the job runs at the pace of its slowest
 GPU: exactly the straggler effect session B measures. Rank 0 prints one JSON line.
+
+Job mode (--total-steps N, for the rescue experiments): train N optimizer steps
+in total, checkpoint every --ckpt-every steps to --ckpt-url (rank 0, HTTP PUT),
+and on start resume from the last checkpoint there. A job moved to other GPUs
+loses at most --ckpt-every steps. Rank 0 prints progress lines and a final
+JSON line with "workload": "train_job".
 """
 import argparse
+import io
 import json
 import os
 import time
+import urllib.error
+import urllib.request
 
 import torch
 import torch.distributed as dist
@@ -37,6 +46,9 @@ def main():
     p.add_argument("--accum", type=int, default=16, help="micro-steps per gradient sync")
     p.add_argument("--warmup-steps", type=int, default=3)
     p.add_argument("--steps", type=int, default=30, help="measured optimizer steps")
+    p.add_argument("--total-steps", type=int, default=0, help="job mode: train this many steps in total, resumable")
+    p.add_argument("--ckpt-url", default="", help="job mode: checkpoint URL, e.g. http://ckpt-store:8000/train-job.pt")
+    p.add_argument("--ckpt-every", type=int, default=10, help="job mode: checkpoint every N steps")
     a = p.parse_args()
 
     cuda = torch.cuda.is_available()
@@ -65,6 +77,11 @@ def main():
             loss.backward()
         opt.step()
 
+    if a.total_steps:
+        run_job(a, step, net, opt, rank, world, cuda, dev)
+        dist.destroy_process_group()
+        return
+
     for _ in range(a.warmup_steps):
         step()
     if cuda:
@@ -91,6 +108,61 @@ def main():
             "micro_batch": a.micro_batch, "accum": a.accum, "torch": torch.__version__,
         }), flush=True)
     dist.destroy_process_group()
+
+
+def load_checkpoint(url, net, opt):
+    """Returns the step to resume from (0 if there's no checkpoint yet)."""
+    if not url:
+        return 0
+    try:
+        with urllib.request.urlopen(url, timeout=60) as r:
+            state = torch.load(io.BytesIO(r.read()), map_location="cpu", weights_only=False)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return 0
+        raise
+    net.load_state_dict(state["model"])
+    opt.load_state_dict(state["opt"])
+    return state["step"]
+
+
+def save_checkpoint(url, net, opt, step):
+    buf = io.BytesIO()
+    torch.save({"model": net.state_dict(), "opt": opt.state_dict(), "step": step}, buf)
+    req = urllib.request.Request(url, data=buf.getvalue(), method="PUT")
+    urllib.request.urlopen(req, timeout=120).close()
+
+
+def run_job(a, step, net, opt, rank, world, cuda, dev):
+    started = time.time()
+    resumed_from = load_checkpoint(a.ckpt_url, net, opt)
+    dist.barrier()
+    if rank == 0:
+        print(json.dumps({"event": "start", "resumed_from": resumed_from, "total_steps": a.total_steps,
+                          "world_size": world, "time": started}), flush=True)
+    t0, done = time.perf_counter(), resumed_from
+    while done < a.total_steps:
+        step()
+        done += 1
+        if done % a.ckpt_every == 0 or done == a.total_steps:
+            if cuda:
+                torch.cuda.synchronize()
+            if rank == 0 and a.ckpt_url:
+                save_checkpoint(a.ckpt_url, net, opt, done)
+            dist.barrier()
+            if rank == 0:
+                print(json.dumps({"event": "checkpoint", "step": done, "elapsed_s": round(time.perf_counter() - t0, 1)}), flush=True)
+    elapsed = time.perf_counter() - t0
+    if rank == 0:
+        steps = done - resumed_from
+        tokens = steps * a.accum * a.micro_batch * world
+        print(json.dumps({
+            "workload": "train_job", "world_size": world,
+            "device": torch.cuda.get_device_name(dev) if cuda else "cpu",
+            "total_steps": a.total_steps, "resumed_from": resumed_from, "steps_this_run": steps,
+            "seconds_this_run": round(elapsed, 1), "tokens_per_s": round(tokens / elapsed, 1) if elapsed else 0,
+            "started": started, "finished": time.time(), "torch": torch.__version__,
+        }), flush=True)
 
 
 if __name__ == "__main__":

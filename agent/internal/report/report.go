@@ -46,6 +46,23 @@ type Summary struct {
 	DegradedGPUHours        float64              `json:"degradedGpuHours"` // training jobs holding a degraded GPU
 	EstimatedWastedGPUHours float64              `json:"estimatedWastedGpuHours"`
 	Incidents               map[string]*Incident `json:"incidents"`
+	Rescues                 []Rescue             `json:"rescues,omitempty"` // newest last, at most MaxIncidents
+}
+
+// Rescue is one training job GPUFit moved off a degraded GPU.
+type Rescue struct {
+	Job  string    `json:"job"`
+	From string    `json:"from"` // the degraded "node/gpu" that triggered it
+	Pods int       `json:"pods"`
+	Time time.Time `json:"time"`
+}
+
+// AddRescue records a rescue (keeps the newest MaxIncidents).
+func (s *Summary) AddRescue(r Rescue) {
+	s.Rescues = append(s.Rescues, r)
+	if len(s.Rescues) > MaxIncidents {
+		s.Rescues = s.Rescues[len(s.Rescues)-MaxIncidents:]
+	}
 }
 
 // MaxIncidents bounds how many incidents are kept (oldest dropped).
