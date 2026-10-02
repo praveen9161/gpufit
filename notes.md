@@ -322,3 +322,9 @@ Confusing moments:
   pre-delete hook Job running `gpufit-controller --cleanup`. First try still failed: the controller was still
   running and re-applied the taint 1s after cleanup. The hook now scales the controller to 0 and waits first.
 - `--set-string` can't carry JSON with commas; fake metrics go in a values file.
+- v0.1.0-rc.1 published by the release workflow (image linux/amd64+arm64, chart, kubectl-gpufit, checksums).
+  Installed the PUBLISHED chart + binaries on kind: enforce, taint, uninstall cleanup all OK.
+  Gotchas: `kind load` fails on the multi-arch image (attestation manifests: "content digest not found") ->
+  wrap it: `echo 'FROM <image>' | docker build --platform linux/arm64 -t <local> -`. A private GHCR image needs
+  imagePullSecrets (added to the chart after rc.1). If the image can't be pulled, the uninstall hook can't run:
+  `helm uninstall --no-hooks`, then remove taints by hand.

@@ -54,6 +54,9 @@ spec:
         app.kubernetes.io/component: agent
     spec:
       serviceAccountName: gpufit-agent
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if and (eq .Values.agent.collector "nvidia-smi") .Values.agent.runtimeClassName }}
       runtimeClassName: {{ .Values.agent.runtimeClassName }}
       {{- end }}

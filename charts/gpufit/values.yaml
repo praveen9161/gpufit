@@ -5,6 +5,8 @@ image:
   repository: ghcr.io/praveen9161/gpufit
   tag: ""                 # default: the chart's appVersion
   pullPolicy: IfNotPresent
+# e.g. [{name: ghcr-pull}] for a private registry
+imagePullSecrets: []
 
 # observe: score, decide and report what it WOULD do; change nothing (default).
 # enforce: apply it: a node with a GPU unfit for training moves to the inference pool

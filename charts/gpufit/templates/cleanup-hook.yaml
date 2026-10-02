@@ -20,6 +20,9 @@ spec:
         app.kubernetes.io/component: cleanup
     spec:
       serviceAccountName: gpufit-controller
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: Never
       {{- with .Values.controller.nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
