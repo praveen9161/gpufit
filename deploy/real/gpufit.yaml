@@ -105,6 +105,13 @@ rules:
 - apiGroups: ["resource.k8s.io"]
   resources: ["devicetaintrules"]
   verbs: ["get", "list", "create", "patch", "delete"]
+# Savings report: which training jobs hold which GPUs (read-only).
+- apiGroups: ["resource.k8s.io"]
+  resources: ["resourceclaims"]
+  verbs: ["list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list"]
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["create"]
@@ -130,8 +137,9 @@ spec:
         image: gpufit-agent:dev
         imagePullPolicy: Never
         command: ["/gpufit-controller"]
+        ports: [{name: metrics, containerPort: 8080}]
         # Session B scales this Deployment 0 -> 1 to switch "with GPUFit" on, so it enforces when running.
-        args: ["--mode=enforce", "--namespace=gpufit", "--driver=gpu.nvidia.com", "--degrade-after=20s", "--recover-after=60s", "--interval=5s"]
+        args: ["--mode=enforce", "--namespace=gpufit", "--driver=gpu.nvidia.com", "--price-per-gpu-hour=1.006", "--degrade-after=20s", "--recover-after=60s", "--interval=5s"]
         resources:
           requests: {cpu: 10m, memory: 32Mi}
           limits: {memory: 64Mi}

@@ -61,6 +61,13 @@ rules:
 - apiGroups: ["resource.k8s.io"]
   resources: ["devicetaintrules"]
   verbs: ["get", "list", "create", "patch", "delete"]
+# Savings report: which training jobs hold which GPUs (read-only).
+- apiGroups: ["resource.k8s.io"]
+  resources: ["resourceclaims"]
+  verbs: ["list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list"]
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["create"]
@@ -99,6 +106,7 @@ spec:
         image: gpufit-agent:dev
         imagePullPolicy: Never   # loaded into kind by deploy/agent/build.sh
         command: ["/gpufit-controller"]
+        ports: [{name: metrics, containerPort: 8080}]
         # enforce: the kind demos expect pools and taints to be applied (default is observe).
         args: ["--mode=enforce", "--degrade-after=10s", "--recover-after=30s", "--interval=5s"]
         env:

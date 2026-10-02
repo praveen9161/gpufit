@@ -1,6 +1,7 @@
 // kubectl-gpufit is a kubectl plugin. Put it on your PATH, then:
 //
 //	kubectl gpufit status [-n gpufit-namespace]   # GPUs, scores, pools, what GPUFit does or would do
+//	kubectl gpufit report [-n gpufit-namespace]   # training time on degraded GPUs, estimated waste and $
 //	kubectl gpufit why <pod> [-n namespace]
 //
 // status reads ConfigMap gpufit-status, written by gpufit-controller.
@@ -32,6 +33,7 @@ import (
 
 const usage = `usage:
   kubectl gpufit status [-n gpufit-namespace]   GPUs, scores, pools; what GPUFit does or would do (default namespace: gpufit)
+  kubectl gpufit report [-n gpufit-namespace]   training time on degraded GPUs, estimated waste and $
   kubectl gpufit why <pod> [-n namespace]       why a pod's DRA GPU claims can't be allocated`
 
 func main() {
@@ -48,7 +50,7 @@ func run(args []string) error {
 	switch args[0] {
 	case "why":
 		return runWhy(args)
-	case "status":
+	case "status", "report":
 		return runStatus(args)
 	case "-h", "--help", "help":
 		fmt.Println(usage)
@@ -57,7 +59,7 @@ func run(args []string) error {
 	return fmt.Errorf("unknown command %q\n%s", args[0], usage)
 }
 
-// runStatus prints the controller's status record.
+// runStatus prints the controller's status record ("status") or its savings report ("report").
 func runStatus(args []string) error {
 	namespace := "gpufit"
 	for i := 1; i < len(args); i++ {
@@ -86,6 +88,13 @@ func runStatus(args []string) error {
 	var st status.Status
 	if err := json.Unmarshal([]byte(cm.Data[status.ConfigMapKey]), &st); err != nil {
 		return fmt.Errorf("read status: %w", err)
+	}
+	if args[0] == "report" {
+		if st.Report == nil {
+			return fmt.Errorf("no report yet: the controller needs a few minutes of data")
+		}
+		st.Report.Render(os.Stdout, time.Now(), st.Mode)
+		return nil
 	}
 	st.Render(os.Stdout, time.Now())
 	return nil

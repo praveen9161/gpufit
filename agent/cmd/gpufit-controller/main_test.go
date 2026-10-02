@@ -8,6 +8,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	resourcev1 "k8s.io/api/resource/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
@@ -30,7 +31,7 @@ func setup(t *testing.T, data map[string]string) (*controller, *fake.Clientset) 
 	)
 	cfg := pools.Config{TrainingMin: 80, RepairMin: 50, DegradeAfter: time.Minute, RecoverAfter: 2 * time.Minute}
 	return &controller{client: cs, tracker: pools.NewTracker(cfg), namespace: "ns", scoresCM: "gpufit-scores",
-		statusCM: "gpufit-status", driver: "gpu.example.com", mode: modeEnforce}, cs
+		statusCM: "gpufit-status", driver: "gpu.example.com", mode: modeEnforce, trainMin: cfg.TrainingMin}, cs
 }
 
 func setScores(t *testing.T, cs *fake.Clientset, data map[string]string) {
@@ -163,3 +164,53 @@ func TestObserveModeReportsWithoutApplying(t *testing.T) {
 		t.Errorf("node-b status = %+v", b)
 	}
 }
+
+// A 2-pod training Job holds gpu-0 on node-a and gpu-1 on node-a/node-b's
+// degraded gpu-1; an inference pod on another GPU must not count.
+func TestReportCountsTrainingJobsOnDegradedGPUs(t *testing.T) {
+	ctx, t0 := context.Background(), time.Now()
+	c, cs := setup(t, map[string]string{"node-a.json": healthyNode, "node-b.json": brokenGPU})
+	c.price = 2
+	jobOwner := []metav1.OwnerReference{{APIVersion: "batch/v1", Kind: "Job", Name: "train", UID: "j1", Controller: ptrTrue()}}
+	for _, p := range []struct{ pod, node, gpu, workload string }{
+		{"train-0", "node-a", "gpu-0", "training"},
+		{"train-1", "node-b", "gpu-1", "training"}, // gpu-1 on node-b scores 0 for training
+		{"serve-0", "node-b", "gpu-0", "inference"},
+	} {
+		pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Namespace: "lab", Name: p.pod}}
+		if p.workload == "training" {
+			pod.OwnerReferences = jobOwner
+		}
+		cs.CoreV1().Pods("lab").Create(ctx, pod, metav1.CreateOptions{})
+		claim := &resourcev1.ResourceClaim{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "lab", Name: p.pod + "-gpu", Labels: map[string]string{"gpufit.io/workload": p.workload}},
+			Status: resourcev1.ResourceClaimStatus{
+				Allocation: &resourcev1.AllocationResult{Devices: resourcev1.DeviceAllocationResult{Results: []resourcev1.DeviceRequestAllocationResult{
+					{Request: "gpu", Driver: "gpu.example.com", Pool: p.node, Device: p.gpu}}}},
+				ReservedFor: []resourcev1.ResourceClaimConsumerReference{{Resource: "pods", Name: p.pod}},
+			},
+		}
+		cs.ResourceV1().ResourceClaims("lab").Create(ctx, claim, metav1.CreateOptions{})
+	}
+	c.report = c.loadReport(ctx, t0)
+	c.reconcile(ctx, t0)                    // first tick only sets the clock
+	c.reconcile(ctx, t0.Add(1*time.Minute)) // 1 minute of a 2-GPU job with a GPU scoring 0
+	r := readStatus(t, cs).Report
+	if r == nil {
+		t.Fatal("no report in status")
+	}
+	// 2 GPUs x 1 min = 1/30 GPU-h, all wasted (slowest speed 0).
+	if !approx(r.DegradedGPUHours, 2.0/60) || !approx(r.EstimatedWastedGPUHours, 2.0/60) || !approx(r.EstimatedWastedDollars(), 4.0/60) {
+		t.Errorf("report totals: %+v", r)
+	}
+	if inc := r.Incidents["lab/Job/train"]; inc == nil || inc.GPUs != 2 || inc.Slowest != "node-b/gpu-1" {
+		t.Errorf("incident: %+v (all: %v)", inc, r.Incidents)
+	}
+	if len(r.Incidents) != 1 {
+		t.Errorf("inference pod counted: %v", r.Incidents)
+	}
+}
+
+func ptrTrue() *bool { b := true; return &b }
+
+func approx(a, b float64) bool { d := a - b; return d < 1e-9 && d > -1e-9 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/praveen9161/gpufit/agent/internal/pools"
+	"github.com/praveen9161/gpufit/agent/internal/report"
 )
 
 const (
@@ -24,6 +25,8 @@ type Status struct {
 	Mode    string          `json:"mode"`
 	Updated time.Time       `json:"updated"`
 	Nodes   map[string]Node `json:"nodes"`
+	// Estimated cost of degraded GPUs to training jobs, since Report.Since.
+	Report *report.Summary `json:"report,omitempty"`
 }
 
 type Node struct {

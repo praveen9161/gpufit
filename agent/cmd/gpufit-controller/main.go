@@ -42,6 +42,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/praveen9161/gpufit/agent/internal/pools"
+	"github.com/praveen9161/gpufit/agent/internal/report"
 	"github.com/praveen9161/gpufit/agent/internal/status"
 )
 
@@ -53,6 +54,8 @@ const (
 	managedBy     = "app.kubernetes.io/managed-by"
 	unfitTraining = "gpufit.io/unfit-training"
 	needsRepair   = "gpufit.io/needs-repair"
+
+	workloadLabel = "gpufit.io/workload"
 
 	modeObserve = status.Observe
 	modeEnforce = status.Enforce
@@ -66,6 +69,12 @@ type controller struct {
 	statusCM  string
 	driver    string
 	mode      string
+
+	// Savings report: training jobs on degraded GPUs, accumulated between reconciles.
+	report   *report.Summary
+	lastTick time.Time
+	price    float64
+	trainMin int
 }
 
 func main() {
@@ -81,6 +90,8 @@ func main() {
 	flag.DurationVar(&cfg.DegradeAfter, "degrade-after", cfg.DegradeAfter, "how long a worse state must hold before it's applied")
 	flag.DurationVar(&cfg.RecoverAfter, "recover-after", cfg.RecoverAfter, "how long a better state must hold before it's applied")
 	interval := flag.Duration("interval", 5*time.Second, "how often to reconcile")
+	flag.Float64Var(&c.price, "price-per-gpu-hour", 0, "GPU price for the savings report ($); 0 = report GPU-hours only")
+	metricsAddr := flag.String("metrics-addr", ":8080", "address for Prometheus /metrics (empty disables)")
 	flag.Parse()
 	if c.mode != modeObserve && c.mode != modeEnforce {
 		log.Fatalf("--mode must be %s or %s, got %q", modeObserve, modeEnforce, c.mode)
@@ -90,7 +101,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.client, c.tracker = client, pools.NewTracker(cfg)
+	c.client, c.tracker, c.trainMin = client, pools.NewTracker(cfg), cfg.TrainingMin
+	c.report = c.loadReport(context.Background(), time.Now())
+	serveMetrics(*metricsAddr)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -145,7 +158,102 @@ func (c *controller) reconcile(ctx context.Context, now time.Time) error {
 		}
 		st.Nodes[node] = status.Node{Pool: d.Pool, Reason: d.PoolReason, Repair: d.Repair, Applied: c.mode == modeEnforce, Scores: scores}
 	}
+	c.updateReport(ctx, now, st.Nodes)
+	st.Report = c.report
+	updateMetrics(st)
 	return c.writeStatus(ctx, st)
+}
+
+// loadReport continues the totals saved in gpufit-status, or starts a new report.
+func (c *controller) loadReport(ctx context.Context, now time.Time) *report.Summary {
+	r := &report.Summary{Since: now.UTC(), Incidents: map[string]*report.Incident{}}
+	if cm, err := c.client.CoreV1().ConfigMaps(c.namespace).Get(ctx, c.statusCM, metav1.GetOptions{}); err == nil {
+		var st status.Status
+		if json.Unmarshal([]byte(cm.Data[status.ConfigMapKey]), &st) == nil && st.Report != nil {
+			r = st.Report
+			log.Printf("report: continuing totals since %s", r.Since.Format(time.RFC3339))
+		}
+	}
+	r.PricePerGPUHour = c.price
+	return r
+}
+
+// updateReport accounts the time since the last reconcile to the training jobs
+// that hold GPUs right now. Gaps (controller down) are not counted.
+func (c *controller) updateReport(ctx context.Context, now time.Time, nodes map[string]status.Node) {
+	if c.report == nil {
+		c.report = &report.Summary{Since: now.UTC()}
+	}
+	dt := now.Sub(c.lastTick)
+	c.lastTick = now
+	if dt <= 0 || dt > 2*time.Minute {
+		return // first tick, or a gap we can't vouch for
+	}
+	jobs, err := c.trainingJobs(ctx)
+	if err != nil {
+		log.Printf("WARN: report: %v", err)
+		return
+	}
+	score := func(node, gpu string) (int, bool) {
+		sc, ok := nodes[node].Scores[gpu]["training"]
+		return sc, ok
+	}
+	c.report.Add(now.UTC(), dt, jobs, score, c.trainMin)
+}
+
+// trainingJobs groups the GPUs held by training pods by the job that owns the
+// pods. A claim is training work if it, or the pod using it, is labelled
+// gpufit.io/workload=training (gpufit-claim sets it on claims).
+func (c *controller) trainingJobs(ctx context.Context) ([]report.Job, error) {
+	claims, err := c.client.ResourceV1().ResourceClaims("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("list claims: %w", err)
+	}
+	pods, err := c.client.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("list pods: %w", err)
+	}
+	podByName := map[string]*corev1.Pod{}
+	for i := range pods.Items {
+		p := &pods.Items[i]
+		podByName[p.Namespace+"/"+p.Name] = p
+	}
+	jobs := map[string]*report.Job{}
+	for _, cl := range claims.Items {
+		if cl.Status.Allocation == nil || len(cl.Status.ReservedFor) == 0 {
+			continue
+		}
+		pod := podByName[cl.Namespace+"/"+cl.Status.ReservedFor[0].Name]
+		workload := cl.Labels[workloadLabel]
+		if workload == "" && pod != nil {
+			workload = pod.Labels[workloadLabel]
+		}
+		if workload != "training" {
+			continue
+		}
+		key := cl.Namespace + "/Claim/" + cl.Name
+		if pod != nil {
+			key = cl.Namespace + "/Pod/" + pod.Name
+			if o := metav1.GetControllerOf(pod); o != nil {
+				key = cl.Namespace + "/" + o.Kind + "/" + o.Name
+			}
+		}
+		j, ok := jobs[key]
+		if !ok {
+			j = &report.Job{Key: key}
+			jobs[key] = j
+		}
+		for _, res := range cl.Status.Allocation.Devices.Results {
+			if res.Driver == c.driver {
+				j.Devices = append(j.Devices, report.Device{Node: res.Pool, Name: res.Device})
+			}
+		}
+	}
+	out := make([]report.Job, 0, len(jobs))
+	for _, j := range jobs {
+		out = append(out, *j)
+	}
+	return out, nil
 }
 
 // observeOnly reports what enforce mode would do and removes anything this
