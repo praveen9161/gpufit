@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/praveen9161/gpufit/agent/internal/pools"
+	"github.com/praveen9161/gpufit/agent/internal/status"
 )
 
 const (
@@ -27,7 +29,8 @@ func setup(t *testing.T, data map[string]string) (*controller, *fake.Clientset) 
 		&corev1.Node{ObjectMeta: metav1.ObjectMeta{Name: "node-b"}},
 	)
 	cfg := pools.Config{TrainingMin: 80, RepairMin: 50, DegradeAfter: time.Minute, RecoverAfter: 2 * time.Minute}
-	return &controller{client: cs, tracker: pools.NewTracker(cfg), namespace: "ns", scoresCM: "gpufit-scores", driver: "gpu.example.com"}, cs
+	return &controller{client: cs, tracker: pools.NewTracker(cfg), namespace: "ns", scoresCM: "gpufit-scores",
+		statusCM: "gpufit-status", driver: "gpu.example.com", mode: modeEnforce}, cs
 }
 
 func setScores(t *testing.T, cs *fake.Clientset, data map[string]string) {
@@ -112,5 +115,51 @@ func TestReconcileLifecycle(t *testing.T) {
 	c.reconcile(ctx, t0.Add(4*time.Minute))
 	if pool(t, cs, "node-a") != "training" || len(ruleNames(t, cs)) != 0 {
 		t.Fatalf("recovered: pool=%s rules=%v", pool(t, cs, "node-a"), ruleNames(t, cs))
+	}
+}
+
+func readStatus(t *testing.T, cs *fake.Clientset) status.Status {
+	t.Helper()
+	cm, err := cs.CoreV1().ConfigMaps("ns").Get(context.Background(), "gpufit-status", metav1.GetOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var st status.Status
+	if err := json.Unmarshal([]byte(cm.Data["status.json"]), &st); err != nil {
+		t.Fatal(err)
+	}
+	return st
+}
+
+// Observe mode decides exactly like enforce mode but changes nothing that
+// affects scheduling, and undoes what an earlier enforce run applied.
+func TestObserveModeReportsWithoutApplying(t *testing.T) {
+	ctx, t0 := context.Background(), time.Now()
+	c, cs := setup(t, map[string]string{"node-a.json": brokenGPU, "node-b.json": healthyNode})
+
+	// Enforce first: rules and label exist.
+	c.reconcile(ctx, t0)
+	if len(ruleNames(t, cs)) != 2 || pool(t, cs, "node-a") != "inference" {
+		t.Fatalf("enforce: rules=%v pool=%s", ruleNames(t, cs), pool(t, cs, "node-a"))
+	}
+
+	// Switch to observe: everything applied is removed, the status still says inference.
+	c.mode = modeObserve
+	if err := c.reconcile(ctx, t0.Add(5*time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if got := ruleNames(t, cs); len(got) != 0 {
+		t.Errorf("observe: rules %v remain", got)
+	}
+	if p := pool(t, cs, "node-a"); p != "" {
+		t.Errorf("observe: node still labelled %q", p)
+	}
+	st := readStatus(t, cs)
+	a := st.Nodes["node-a"]
+	if st.Mode != modeObserve || a.Pool != "inference" || a.Applied || a.Repair["gpu-1"] == "" {
+		t.Errorf("status = %+v", st)
+	}
+	if b := st.Nodes["node-b"]; b.Pool != "training" || b.Scores["gpu-0"]["training"] != 100 {
+		t.Errorf("node-b status = %+v", b)
 	}
 }

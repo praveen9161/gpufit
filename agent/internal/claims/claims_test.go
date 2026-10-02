@@ -52,6 +52,7 @@ func TestWrite(t *testing.T) {
 	out := b.String()
 	for _, want := range []string{
 		"name: training-min80-2gpu",
+		"gpufit.io/workload: training",
 		"gpufit.io/min-score: \"80\"",
 		"count: 2",
 		`expression: device.attributes["gpufit.io"].trainingScore >= 95`,

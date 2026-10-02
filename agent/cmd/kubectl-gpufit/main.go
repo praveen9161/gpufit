@@ -1,6 +1,9 @@
 // kubectl-gpufit is a kubectl plugin. Put it on your PATH, then:
 //
+//	kubectl gpufit status [-n gpufit-namespace]   # GPUs, scores, pools, what GPUFit does or would do
 //	kubectl gpufit why <pod> [-n namespace]
+//
+// status reads ConfigMap gpufit-status, written by gpufit-controller.
 //
 // explains why a pod's DRA GPU claims aren't allocated: for every request
 // option, which GPUs fail its selector (with the actual score), which are
@@ -11,9 +14,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	resourcev1 "k8s.io/api/resource/v1"
@@ -21,12 +26,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/praveen9161/gpufit/agent/internal/status"
 	"github.com/praveen9161/gpufit/agent/internal/why"
 )
 
-const usage = `usage: kubectl gpufit why <pod> [-n namespace]
-
-Explains why a pod's DRA GPU claims can't be allocated.`
+const usage = `usage:
+  kubectl gpufit status [-n gpufit-namespace]   GPUs, scores, pools; what GPUFit does or would do (default namespace: gpufit)
+  kubectl gpufit why <pod> [-n namespace]       why a pod's DRA GPU claims can't be allocated`
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -36,9 +42,56 @@ func main() {
 }
 
 func run(args []string) error {
-	if len(args) == 0 || args[0] != "why" {
+	if len(args) == 0 {
 		return fmt.Errorf("%s", usage)
 	}
+	switch args[0] {
+	case "why":
+		return runWhy(args)
+	case "status":
+		return runStatus(args)
+	case "-h", "--help", "help":
+		fmt.Println(usage)
+		return nil
+	}
+	return fmt.Errorf("unknown command %q\n%s", args[0], usage)
+}
+
+// runStatus prints the controller's status record.
+func runStatus(args []string) error {
+	namespace := "gpufit"
+	for i := 1; i < len(args); i++ {
+		switch a := args[i]; a {
+		case "-n", "--namespace":
+			if i+1 >= len(args) {
+				return fmt.Errorf("%s needs a value", a)
+			}
+			namespace, i = args[i+1], i+1
+		default:
+			return fmt.Errorf("unexpected argument %q\n%s", a, usage)
+		}
+	}
+	cfg, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), nil).ClientConfig()
+	if err != nil {
+		return err
+	}
+	client, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return err
+	}
+	cm, err := client.CoreV1().ConfigMaps(namespace).Get(context.Background(), "gpufit-status", metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("no GPUFit status in namespace %q (is gpufit-controller running there? use -n): %w", namespace, err)
+	}
+	var st status.Status
+	if err := json.Unmarshal([]byte(cm.Data[status.ConfigMapKey]), &st); err != nil {
+		return fmt.Errorf("read status: %w", err)
+	}
+	st.Render(os.Stdout, time.Now())
+	return nil
+}
+
+func runWhy(args []string) error {
 	var pod, namespace string
 	for i := 1; i < len(args); i++ { // flags may come before or after the pod name
 		switch a := args[i]; a {

@@ -110,6 +110,10 @@ metadata:
     gpufit.io/workload: {{.Workload}}
     gpufit.io/min-score: "{{.Min}}"
 spec:
+  # Copied onto every ResourceClaim made from this template; GPUFit's report uses it.
+  metadata:
+    labels:
+      gpufit.io/workload: {{.Workload}}
   spec:
     devices:
       requests:

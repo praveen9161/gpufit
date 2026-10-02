@@ -16,6 +16,12 @@ metadata:
   name: gpufit-scores
   namespace: gpufit
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpufit-status
+  namespace: gpufit
+---
 # ---- agent ----
 apiVersion: v1
 kind: ServiceAccount
@@ -78,6 +84,10 @@ rules:
   resources: ["configmaps"]
   resourceNames: ["gpufit-scores"]
   verbs: ["get"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-status"]
+  verbs: ["get", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -120,7 +130,8 @@ spec:
         image: gpufit-agent:dev
         imagePullPolicy: Never
         command: ["/gpufit-controller"]
-        args: ["--namespace=gpufit", "--driver=gpu.nvidia.com", "--degrade-after=20s", "--recover-after=60s", "--interval=5s"]
+        # Session B scales this Deployment 0 -> 1 to switch "with GPUFit" on, so it enforces when running.
+        args: ["--mode=enforce", "--namespace=gpufit", "--driver=gpu.nvidia.com", "--degrade-after=20s", "--recover-after=60s", "--interval=5s"]
         resources:
           requests: {cpu: 10m, memory: 32Mi}
           limits: {memory: 64Mi}

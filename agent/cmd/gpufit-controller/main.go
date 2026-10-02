@@ -10,6 +10,13 @@
 //   - a Kubernetes Event on the Node for every change
 //
 // Device taints are NoSchedule: new claims avoid the GPUs, running jobs stay.
+//
+// Modes: "enforce" applies the above. "observe" (the default) makes the same
+// decisions but changes nothing that affects scheduling: it records what it
+// would do (events prefixed "observe mode, not applied", the status ConfigMap)
+// and removes anything it applied earlier in enforce mode.
+// Either way it writes ConfigMap gpufit-status (key status.json), which
+// `kubectl gpufit status` reads.
 package main
 
 import (
@@ -35,6 +42,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/praveen9161/gpufit/agent/internal/pools"
+	"github.com/praveen9161/gpufit/agent/internal/status"
 )
 
 const (
@@ -45,6 +53,9 @@ const (
 	managedBy     = "app.kubernetes.io/managed-by"
 	unfitTraining = "gpufit.io/unfit-training"
 	needsRepair   = "gpufit.io/needs-repair"
+
+	modeObserve = status.Observe
+	modeEnforce = status.Enforce
 )
 
 type controller struct {
@@ -52,7 +63,9 @@ type controller struct {
 	tracker   *pools.Tracker
 	namespace string
 	scoresCM  string
+	statusCM  string
 	driver    string
+	mode      string
 }
 
 func main() {
@@ -60,13 +73,18 @@ func main() {
 	c := controller{}
 	flag.StringVar(&c.namespace, "namespace", envOr("POD_NAMESPACE", "dra-example-driver"), "namespace of the scores ConfigMap")
 	flag.StringVar(&c.scoresCM, "scores-configmap", "gpufit-scores", "ConfigMap the agents write scores to")
+	flag.StringVar(&c.statusCM, "status-configmap", "gpufit-status", "ConfigMap the controller writes its view to (read by kubectl gpufit status)")
 	flag.StringVar(&c.driver, "driver", "gpu.example.com", "DRA driver whose devices get tainted")
+	flag.StringVar(&c.mode, "mode", modeObserve, "observe (decide and report, change nothing) or enforce (apply pools and taints)")
 	flag.IntVar(&cfg.TrainingMin, "training-min", cfg.TrainingMin, "node leaves the training pool if any GPU's training score is below this")
 	flag.IntVar(&cfg.RepairMin, "repair-min", cfg.RepairMin, "GPU needs repair if its inference score is below this")
 	flag.DurationVar(&cfg.DegradeAfter, "degrade-after", cfg.DegradeAfter, "how long a worse state must hold before it's applied")
 	flag.DurationVar(&cfg.RecoverAfter, "recover-after", cfg.RecoverAfter, "how long a better state must hold before it's applied")
 	interval := flag.Duration("interval", 5*time.Second, "how often to reconcile")
 	flag.Parse()
+	if c.mode != modeObserve && c.mode != modeEnforce {
+		log.Fatalf("--mode must be %s or %s, got %q", modeObserve, modeEnforce, c.mode)
+	}
 
 	client, err := kubeClient()
 	if err != nil {
@@ -76,8 +94,8 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	log.Printf("gpufit-controller: training-min=%d repair-min=%d degrade-after=%s recover-after=%s driver=%s",
-		cfg.TrainingMin, cfg.RepairMin, cfg.DegradeAfter, cfg.RecoverAfter, c.driver)
+	log.Printf("gpufit-controller: mode=%s training-min=%d repair-min=%d degrade-after=%s recover-after=%s driver=%s",
+		c.mode, cfg.TrainingMin, cfg.RepairMin, cfg.DegradeAfter, cfg.RecoverAfter, c.driver)
 
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()
@@ -104,6 +122,7 @@ func (c *controller) reconcile(ctx context.Context, now time.Time) error {
 	}
 	sort.Strings(keys)
 
+	st := status.Status{Mode: c.mode, Updated: now.UTC(), Nodes: map[string]status.Node{}}
 	for _, key := range keys {
 		node, ok := strings.CutSuffix(key, ".json")
 		if !ok || node == "scores" { // scores.json is the cluster-wide CLI fallback, not a node
@@ -115,9 +134,54 @@ func (c *controller) reconcile(ctx context.Context, now time.Time) error {
 			continue
 		}
 		d := c.tracker.Observe(now, node, scores)
-		if err := c.apply(ctx, node, d); err != nil {
+		var err error
+		if c.mode == modeEnforce {
+			err = c.apply(ctx, node, d)
+		} else {
+			err = c.observeOnly(ctx, node, d)
+		}
+		if err != nil {
 			log.Printf("ERROR: node %s: %v", node, err)
 		}
+		st.Nodes[node] = status.Node{Pool: d.Pool, Reason: d.PoolReason, Repair: d.Repair, Applied: c.mode == modeEnforce, Scores: scores}
+	}
+	return c.writeStatus(ctx, st)
+}
+
+// observeOnly reports what enforce mode would do and removes anything this
+// controller applied before (e.g. after switching from enforce to observe).
+func (c *controller) observeOnly(ctx context.Context, node string, d pools.Decision) error {
+	n, err := c.client.CoreV1().Nodes().Get(ctx, node, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("get node: %w", err)
+	}
+	for _, change := range d.Changes {
+		msg := "observe mode, not applied: " + change
+		log.Printf("node %s: %s", node, msg)
+		c.event(ctx, n, msg)
+	}
+	if _, labelled := n.Labels[poolLabel]; labelled {
+		// Applying an empty configuration with our field manager drops the
+		// label and annotation we own, and nothing else.
+		if _, err := c.client.CoreV1().Nodes().Apply(ctx, applycorev1.Node(node),
+			metav1.ApplyOptions{FieldManager: manager, Force: true}); err != nil {
+			return fmt.Errorf("unlabel node: %w", err)
+		}
+		log.Printf("node %s: removed pool label (observe mode)", node)
+	}
+	return c.removeRules(ctx, node, nil)
+}
+
+func (c *controller) writeStatus(ctx context.Context, st status.Status) error {
+	raw, err := json.Marshal(st)
+	if err != nil {
+		return err
+	}
+	_, err = c.client.CoreV1().ConfigMaps(c.namespace).Apply(ctx,
+		applycorev1.ConfigMap(c.statusCM, c.namespace).WithData(map[string]string{status.ConfigMapKey: string(raw)}),
+		metav1.ApplyOptions{FieldManager: manager, Force: true})
+	if err != nil {
+		return fmt.Errorf("write status: %w", err)
 	}
 	return nil
 }
@@ -154,6 +218,11 @@ func (c *controller) apply(ctx context.Context, node string, d pools.Decision) e
 	}
 
 	// 3. Remove our rules for this node that are no longer wanted.
+	return c.removeRules(ctx, node, want)
+}
+
+// removeRules deletes this controller's rules for the node except those in keep.
+func (c *controller) removeRules(ctx context.Context, node string, keep map[string]*applyresourcev1.DeviceTaintRuleApplyConfiguration) error {
 	existing, err := c.client.ResourceV1().DeviceTaintRules().List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s,%s=%s", managedBy, manager, nodeLabel, node),
 	})
@@ -161,7 +230,7 @@ func (c *controller) apply(ctx context.Context, node string, d pools.Decision) e
 		return fmt.Errorf("list rules: %w", err)
 	}
 	for _, r := range existing.Items {
-		if _, keep := want[r.Name]; !keep {
+		if _, ok := keep[r.Name]; !ok {
 			if err := c.client.ResourceV1().DeviceTaintRules().Delete(ctx, r.Name, metav1.DeleteOptions{}); err != nil {
 				return fmt.Errorf("delete %s: %w", r.Name, err)
 			}

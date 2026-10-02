@@ -23,6 +23,17 @@ rules:
   resources: ["configmaps"]
   resourceNames: ["gpufit-scores"]
   verbs: ["get"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["gpufit-status"]
+  verbs: ["get", "patch"]
+---
+# Created here so the controller only needs "patch" on this one ConfigMap.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpufit-status
+  namespace: dra-example-driver
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -88,7 +99,8 @@ spec:
         image: gpufit-agent:dev
         imagePullPolicy: Never   # loaded into kind by deploy/agent/build.sh
         command: ["/gpufit-controller"]
-        args: ["--degrade-after=10s", "--recover-after=30s", "--interval=5s"]
+        # enforce: the kind demos expect pools and taints to be applied (default is observe).
+        args: ["--mode=enforce", "--degrade-after=10s", "--recover-after=30s", "--interval=5s"]
         env:
         - name: POD_NAMESPACE
           valueFrom:
