@@ -7,6 +7,8 @@
 away from synchronous training, where it would slow every other GPU in the job, and keeps
 serving inference, where it still performs almost like a healthy one.
 
+**The story behind it:** [A slow GPU isn't a broken GPU](https://dev.to/praveen9161/a-slow-gpu-isnt-a-broken-gpu-grading-gpus-per-workload-in-kubernetes-measured-on-real-a10gs-4mij) (dev.to).
+
 **Measured on real GPUs:**
 - With one of two NVIDIA A10Gs degraded, Kubernetes + GPUFit cut the cost per useful GPU-hour
   from **$1.35 to $1.02 (-25%)** compared with Kubernetes alone
